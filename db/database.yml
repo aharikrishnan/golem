@@ -1,0 +1,13 @@
+development:
+  adapter: mysql
+  encoding: utf8
+  database: crawls
+  pool: 5
+  username: root
+  password: root
+  socket: /var/run/mysqld/mysqld.sock
+  #tree:
+    #adapter: sqlite3
+    #database: db/tree.sqlite3
+    #pool: 5
+    #timeout: 5000
