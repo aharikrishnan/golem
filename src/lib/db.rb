@@ -21,6 +21,7 @@ module DB
   end
 end
 
+# gem 'mysql', '2.8.1'
 begin
   DB.establish_connection
 rescue Exception => e

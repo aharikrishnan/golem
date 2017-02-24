@@ -3,9 +3,13 @@ class Http
 
     def get url, tmpfile='blah'
       tmpfile = data_file tmpfile
-      puts "[GET] #{url}"
       resp = nil
       # -s = Shutup
+      if File.exists? tmpfile
+        puts "[GET] [LOCAL] [#{tmpfile}] #{url}"
+        return File.read(tmpfile)
+      end
+      puts "[GET] #{url}"
       `curl -o #{tmpfile} -s '#{url}' > /dev/null`
       if File.exists? tmpfile
         resp = File.read(tmpfile)
@@ -15,49 +19,114 @@ class Http
       resp
     end
 
-    def content_cached? file
-      File.exists? file
+    def cache_obj key, obj
+      instance_variable_set("@#{key}",obj)
+    end
+    def get_from_cache key
+      instance_variable_get("@#{key}")
+    end
+    def in_cache? key
+      !get_from_cache(key).nil?
+    end
+    def fetch_cached_obj key
+      if in_cache? key
+        get_from_cache(key)
+      else
+        obj = yield if block_given?
+        cache_obj(key, obj)
+      end
     end
 
-    def cached_content file
-      File.read file
+    # does a binary search on the queue
+    # to find optimized partition for queue
+    # that reduces the number of N/W calls
+    def partition q, optimal_length=10
+      #debug "searching for #{optimal_length}"
+      len = q.length
+      index = i = j = len - 1
+      m = (len/2).floor
+      begin
+        index = i
+        #m = ((j+1)/2).floor
+        to_crawl = get_uncrawled_list(q[0..i])
+        #debug "#{i} #{j} #{index} to_crawl: #{to_crawl.length} optimal: #{optimal_length}"
+        if to_crawl.length < optimal_length
+          i = i + m
+        elsif to_crawl.length > optimal_length
+          j = i
+          i = i - m
+        else
+          j = i
+        end
+        m = ((j-i+1)/2).floor
+      end while i < j
+      info "Found ya! #{index}"
+      index + 1 # Array index starts from 0
     end
 
-    def get_bn bn_ids, timeout=0.8
-      bn_id = bn_ids
+    def get_uncrawled_list bn_ids
+      crawled = get_crawled_list
+      #debug "#{crawled.length} -- #{bn_ids.length}"
+      bn_ids.to_set - crawled
+    end
+
+    def get_crawled_list
+      @all_crawled ||= fetch_cached_obj('crawled_set') do
+        Crawl.all(:select => 'uid').map(&:uid).to_set
+      end
+    end
+
+    def optimize_queue queue
+      l = partition queue
+      info "Optimal partition is #{l}/#{queue.length}"
+      bn_ids = queue.shift(l)
+      debug bn_ids.inspect
+      info "#{queue.inspect}"
+      crawled = Crawl.find_all_by_uid(bn_ids)
+      to_crawl = bn_ids - crawled.map(&:uid)
+      [to_crawl, crawled]
+    end
+
+    def get_bns queue, timeout=0.8
+      bn_ids, crawled= optimize_queue queue
       #bn_id = [bn_ids].flatten.sort
-      tmpfile = "bn-#{bn_id}"
+      tmpfile = "bn-#{bn_ids.join('_')}"
       datafile = data_file tmpfile
-      return cached_content(datafile) if content_cached?(datafile)
-      params = {
-        "Service" => "AWSECommerceService",
-        "Operation" => "BrowseNodeLookup",
-        "AWSAccessKeyId" => aws_access_key_id,
-        "AssociateTag" => aws_associate_tag,
-        "BrowseNodeId" => bn_id,
-        "ResponseGroup" => "BrowseNodeInfo"
-      }
+      new_crawls = []
+      if bn_ids.present?
+        info "Fetch! #{bn_ids.inspect}"
+        params = {
+          "Service" => "AWSECommerceService",
+          "Operation" => "BrowseNodeLookup",
+          "AWSAccessKeyId" => aws_access_key_id,
+          "AssociateTag" => aws_associate_tag,
+          "BrowseNodeId" => bn_ids.join(","),
+          "ResponseGroup" => "BrowseNodeInfo"
+        }
 
-      # Set current timestamp if not set
-      params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
+        # Set current timestamp if not set
+        params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
 
-      # Generate the canonical query
-      canonical_query_string = params.sort.collect do |key, value|
-        [URI.escape(key.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]")), URI.escape(value.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))].join('=')
-      end.join('&')
+        # Generate the canonical query
+        canonical_query_string = params.sort.collect do |key, value|
+          [URI.escape(key.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]")), URI.escape(value.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))].join('=')
+        end.join('&')
 
-      # Generate the string to be signed
-      string_to_sign = "GET\n#{ENDPOINT}\n#{REQUEST_URI}\n#{canonical_query_string}"
+        # Generate the string to be signed
+        string_to_sign = "GET\n#{ENDPOINT}\n#{REQUEST_URI}\n#{canonical_query_string}"
 
-      # Generate the signature required by the Product Advertising API
-      signature = Base64.encode64(OpenSSL::HMAC.digest(OpenSSL::Digest.new('sha256'), aws_secret_key, string_to_sign)).strip()
+        # Generate the signature required by the Product Advertising API
+        signature = Base64.encode64(OpenSSL::HMAC.digest(OpenSSL::Digest.new('sha256'), aws_secret_key, string_to_sign)).strip()
 
-      # Generate the signed URL
-      request_url = "http://#{ENDPOINT}#{REQUEST_URI}?#{canonical_query_string}&Signature=#{URI.escape(signature, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))}"
+        # Generate the signed URL
+        request_url = "http://#{ENDPOINT}#{REQUEST_URI}?#{canonical_query_string}&Signature=#{URI.escape(signature, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))}"
 
-      resp = self.get request_url, tmpfile
-      sleep timeout
-      resp
+        resp = self.get request_url, tmpfile
+        new_crawls  = Crawl.create_from_bn_xml(resp)
+        new_crawls.each{|c| @all_crawled << c.uid}
+        sleep timeout
+      end
+      [crawled, new_crawls].flatten.compact.map(&:dump)
     end
   end
 end

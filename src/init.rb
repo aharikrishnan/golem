@@ -46,7 +46,7 @@ def require_file file
 end
 
 def worker
-  @worker ||= 0
+  @worker ||= 2
 end
 
 def init_worker id
@@ -75,28 +75,27 @@ def data_file file_name
 end
 
 def parse_xml_without_namespace xml
-  doc = Nokogiri::XML(xml)
-  doc.remove_namespaces!
-  doc
+  Crawl.parse_xml_without_namespace xml
 end
 
 def get_browse_nodes_from_xml_file file
-  doc = parse_xml_without_namespace File.read(file)
-  bn =doc.xpath('/BrowseNodeLookupResponse/BrowseNodes/BrowseNode')
-  [bn].flatten
+  Crawl.get_browse_nodes_from_xml File.read(file)
 end
 
 def get_node_data_from_xml_doc xml_doc
-  bn_id = xml_doc.xpath('BrowseNodeId').text
-  name = xml_doc.xpath('Name').text
-  {
-    :id => bn_id,
-    :name => name
-  }
+  Crawl.get_node_data_from_xml_doc xml_doc
+end
+
+def get_children_from_xml_doc xml_doc
+  Crawl.get_children_from_xml_doc xml_doc
+end
+
+def get_ancestors_from_xml_doc xml_doc
+  Crawl.get_ancestors_from_xml_doc xml_doc
 end
 
 def compact_str! str
-   str.gsub!(/\n/, '').gsub!(/[\s]+/, ' ')
+   Crawl.compact_str!(str)
 end
 
 def run_id; @run_id; end
@@ -107,9 +106,7 @@ def info msg
 end
 
 def debug msg
-  puts "┻━┻︵ \(°□°)/ ︵ ┻━┻ "
-  puts msg
-  puts ""
+  puts "(Ͼ˳Ͽ)..!!!\t#{msg}"
 end
 
 def error msg, opts={}
@@ -129,6 +126,7 @@ AWS_IDENTITIES = read_yaml('identities/aws.yml')['product_advertising']
 raise "err_emptyidentity" if AWS_IDENTITIES.nil? || AWS_IDENTITIES ==[]
 
 require_file 'src/lib/db'
+require_file 'src/lib/persistance'
 require_file 'src/lib/http'
 require_file 'src/lib/tree_utils'
 require_file 'src/bn_tree'
@@ -138,4 +136,8 @@ def migrate
   DB.establish_connection
   require_files 'db/migrate.rb'
   require_files 'db/migrations/*'
+end
+
+def reload
+  require_file __FILE__
 end

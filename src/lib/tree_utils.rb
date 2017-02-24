@@ -12,6 +12,7 @@ class TreeUtils
     def set_node data={}
       tree[data[:id]] ||={}
       tree[data[:id]].merge!(data)
+      info "Set Node: #{data.inspect}"
       save
     end
 
@@ -21,6 +22,7 @@ class TreeUtils
 
     def visit_node bn_id
       visited << bn_id
+      info "Visited #{bn_id}"
     end
 
     def add_ancestor bn_id, parent_bn_id
@@ -49,37 +51,57 @@ class TreeUtils
       #xml_doc.xpath('B')
     #end
 
+    def _q
+      @queue||=[]
+    end
+
+    # TODO convert to BFS - Done
     def floodfill_tree bn_id, &blk
+      info "Fill #{bn_id}"
       return bn_id if node_visited?(bn_id)
+      _q.push(bn_id)
 
-      bn = blk.call(bn_id)
-
-      set_node(get_node_data_from_xml_doc(bn))
-
-      visit_node bn_id
-
-      children = bn.xpath('Children/BrowseNode').map{|child_bn| get_node_data_from_xml_doc(child_bn)}
-      children.each do |child|
-        floodfill_tree child[:id], &blk
-        add_child bn_id, child[:id]
-      end
-
-      ancestors = bn.xpath('Ancestors/BrowseNode')
-      ancestors.each do |parent|
-        parent_data = get_node_data_from_xml_doc parent
-        floodfill_tree parent_data[:id], &blk
-        add_ancestor bn_id, parent_data[:id]
-        # First 2 levels of ancestors are virtual nodes
-        # Add them with this request
-        current_parent_bn_id = parent_data[:id]
-        grandparent = parent.xpath('Ancestor/BrowseNode')
-        while grandparent.length > 0
-          grandparent_data = get_node_data_from_xml_doc parent
-          set_node grandparent_data
-          add_ancestor current_parent_bn_id, grandparent_data[:id]
-          current_parent_bn_id = grandparent_data[:id]
-          grandparent = current_parent.xpath('Ancestor/BrowseNode')
+      while _q.length > 0 do
+        #bn = blk.call(bn_id)
+        bns = Http.get_bns _q
+        bns.each do |bn|
+          bn_data = get_node_data_from_xml_doc(bn)
+          set_node(bn_data)
+          debug "Found #{get_children_from_xml_doc(bn).length} children"
+          children = get_children_from_xml_doc(bn).map do |child_bn| 
+            get_node_data_from_xml_doc(child_bn)
+          end
+          children.each do |child|
+            #floodfill_tree child[:id], &blk
+            _q.push(child[:id])
+            add_child bn_data[:id], child[:id]
+          end
+          ancestors = get_ancestors_from_xml_doc(bn)
+          debug "Found #{ancestors.length} ancestors"
+          ancestors.each do |parent|
+            parent_data = get_node_data_from_xml_doc parent
+            #floodfill_tree parent_data[:id], &blk
+            _q.push(parent_data[:id])
+            add_ancestor bn_data[:id], parent_data[:id]
+            # First 2 levels of ancestors are virtual nodes
+            # Add them with this request
+            current_parent_bn_id = parent_data[:id]
+            grandparent = get_ancestors_from_xml_doc(parent)
+            while grandparent.length > 0
+              # MAybe Bug
+              grandparent_data = get_node_data_from_xml_doc parent
+              set_node grandparent_data
+              add_ancestor current_parent_bn_id, grandparent_data[:id]
+              current_parent_bn_id = grandparent_data[:id]
+              grandparent = get_ancestors_from_xml_doc(grandparent)
+            end
+          end
+          # a node is visited when all neighbours are visited
+          visit_node bn_data[:id]
         end
+        info "To process #{_q.inspect}"
+        _q.reject!{|e| node_visited?(e)}
+        info "To process #{_q.length} node(s)"
       end
     end
 
