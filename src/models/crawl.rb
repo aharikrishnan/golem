@@ -1,5 +1,6 @@
 class Crawl < ActiveRecord::Base
   serialize :fields
+
   self.inheritance_column = :_type_disabled
 
   def dump
@@ -17,11 +18,47 @@ class Crawl < ActiveRecord::Base
     Crawl.find_by_uid('x')
   end
 
+  def populate
+    case self[:type]
+    when 'amazon browse node tree' then
+      a_len, c_len = self.ancestors.length, self.childrens.length
+      type = if a_len == 0 && c_len == 0
+               'bud'
+             elsif a_len == 0
+               'root'
+             elsif c_len == 0
+               'leaf'
+             else
+               'branch'
+             end
+      ids = []
+      names = []
+      ans = self.path_of_ancestors
+      ans.each do |an|
+        ids << an.map{|a|a[:id]}.reverse.join("|")
+        names << an.map{|a|a[:name]}.reverse.join("|")
+      end
+      bn = AmazonBrowseNode.new :name => self.fields[:name],
+        :path_ids => ids.join("$$"),
+        :path_names => names.join("$$"),
+        :source_id => self[:id],
+        :type => type
+      bn.id = self.fields[:id]
+      bn.save
+      bn
+    else
+      nil
+    end
+  rescue Exception => e
+    error e.message, :silent => true
+  end
+
+  # Amazon browse node related methods
   def self.create_from_bn_xml bn_xml
     bns = get_browse_nodes_from_xml(bn_xml.to_s)
     crawls = []
     bns.each do |bn|
-      data = get_node_data_from_xml_doc(bn)
+      data = AmazonBrowseNode.get_node_data_from_xml_doc(bn)
       if crawled data[:id]
         facepalm "Already crawled #{data[:id]}"
         next
@@ -35,39 +72,29 @@ class Crawl < ActiveRecord::Base
     crawls
   end
 
-  def self.get_node_data_from_xml_doc xml_doc
-    bn_id = xml_doc.xpath('BrowseNode/BrowseNodeId').text.presence||xml_doc.xpath('BrowseNodeId').text
-    name = xml_doc.xpath('BrowseNode/Name').text.presence || xml_doc.xpath('Name').text
-    #File.open("/tmp/vv","w"){|f|f.write(xml_doc.to_s)} if bn_id.nil? || bn_id.length < 1
-    #error xml_doc.to_s if bn_id.nil? || bn_id.length < 1
-
-    node_data = {
-      :id => bn_id,
-      :name => name
-    }
-    node_data
-  end
-
   def childrens
-    self.class.get_children_from_xml_doc self.dump
+    AmazonBrowseNode.get_children_from_xml_doc self.dump
   end
 
   def ancestors
-    self.class.get_ancestors_from_xml_doc self.dump
+    AmazonBrowseNode.get_ancestors_from_xml_doc self.dump
   end
 
-  def self.get_children_from_xml_doc xml_doc
-    xml_doc.xpath('BrowseNode/Children/BrowseNode')
-  end
-  def self.get_ancestors_from_xml_doc xml_doc
-    xml_doc.xpath('BrowseNode/Ancestors/BrowseNode')
+  def path_of_ancestors
+    self.ancestors.map do |ancestor|
+      recursive_get_bn(ancestor).flatten
+    end
   end
 
-
-  def self.get_browse_nodes_from_xml content
-    doc = parse_xml_without_namespace content
-    bn =doc.xpath('/BrowseNodeLookupResponse/BrowseNodes/BrowseNode')
-    [bn].flatten
+  def recursive_get_bn node, p=[]
+    bns = []
+    return bns if node.nil?
+    bns << {:name => node.css(">Name").text, :id => node.css(">BrowseNodeId").text  }
+    p << bns
+    if node.css(">Ancestors").length > 0
+      recursive_get_bn node.css(">Ancestors > BrowseNode"), p
+    end
+    p
   end
 
 

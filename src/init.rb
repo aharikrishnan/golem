@@ -80,19 +80,19 @@ def parse_xml_without_namespace xml
 end
 
 def get_browse_nodes_from_xml_file file
-  Crawl.get_browse_nodes_from_xml File.read(file)
+  AmazonBrowsNode.get_browse_nodes_from_xml File.read(file)
 end
 
 def get_node_data_from_xml_doc xml_doc
-  Crawl.get_node_data_from_xml_doc xml_doc
+  AmazonBrowsNode.get_node_data_from_xml_doc xml_doc
 end
 
 def get_children_from_xml_doc xml_doc
-  Crawl.get_children_from_xml_doc xml_doc
+  AmazonBrowsNode.get_children_from_xml_doc xml_doc
 end
 
 def get_ancestors_from_xml_doc xml_doc
-  Crawl.get_ancestors_from_xml_doc xml_doc
+  AmazonBrowsNode.get_ancestors_from_xml_doc xml_doc
 end
 
 def compact_str! str
@@ -126,12 +126,10 @@ end
 AWS_IDENTITIES = read_yaml('identities/aws.yml')['product_advertising']
 raise "err_emptyidentity" if AWS_IDENTITIES.nil? || AWS_IDENTITIES ==[]
 
-require_file 'src/lib/db'
-require_file 'src/lib/persistance'
-require_file 'src/lib/http'
-require_file 'src/lib/tree_utils'
-require_file 'src/bn_tree'
+require_files 'src/lib/*'
 require_files 'src/models/*'
+require_file 'src/bn_tree'
+require_file 'src/golem'
 
 def migrate
   DB.establish_connection
