@@ -1,3 +1,4 @@
+# encoding: utf-8
 module DB
   class << self
     def establish_connection db_config_path='db/database.yml'

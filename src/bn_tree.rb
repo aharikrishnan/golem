@@ -1,3 +1,4 @@
+# encoding: utf-8
 #@TODO Fix code to use batch browse node lookup api
 #      Speed up 10x
 

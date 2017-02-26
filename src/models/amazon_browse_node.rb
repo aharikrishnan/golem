@@ -1,3 +1,4 @@
+# encoding: utf-8
 class AmazonBrowseNode < ActiveRecord::Base
   #serialize :path_ids, Array
   #serialize :path_names, Array

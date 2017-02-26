@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 Crawl.find_in_batches(:batch_size => 10000){|cs|
   Crawl.transaction{
     cs.map(&:populate);nil

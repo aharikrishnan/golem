@@ -1,3 +1,4 @@
+# encoding: utf-8
 class CrawlJob < ActiveRecord::Base
   serialize :input
   self.inheritance_column = :_type_disabled

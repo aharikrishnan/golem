@@ -1,3 +1,4 @@
+# encoding: utf-8
 def content_cached? uid
   Crawl.crawled(uid).present?
 end

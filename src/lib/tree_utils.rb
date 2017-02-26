@@ -1,3 +1,5 @@
+# encoding: utf-8
+
 class TreeUtils
   class << self
     def tree

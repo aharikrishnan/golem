@@ -1,3 +1,4 @@
+# encoding: utf-8
 class EasyJsonSerializer
   attr_reader :value
 
