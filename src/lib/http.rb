@@ -20,7 +20,7 @@ class Http
       if File.exists? tmpfile
         resp = File.read(tmpfile)
       else
-        raise "Getting '#{url}' went wrong (╭ರ_•́)"
+        error "Getting '#{url}' went wrong (╭ರ_•́)"
       end
       resp
     end

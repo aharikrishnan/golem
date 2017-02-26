@@ -24,7 +24,7 @@ end
 def amazon_get_root_bn_ids
   # http://docs.aws.amazon.com/AWSECommerceService/latest/DG/LocaleUS.html
   url = "https://www.amazon.com/gp/site-directory/ref=nav_shopall_fullstore"
-  tmpfile = 'amazon-sitemap.html'
+  tmpfile = 'tmp/amazon-sitemap.html'
   resp = Http.get url, tmpfile
   root_like_bns = if !resp.nil?
     parse_root_bn_ids_from_html(resp)
