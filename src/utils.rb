@@ -26,3 +26,14 @@ AmazonBrowseNode.find_in_batches(:batch_size => 10000){|cs|
     }
   }
 }
+bn_ids = File.read(abs_path('input.lst')).split.uniq.compact; nil
+bns = AmazonBrowseNode.find_all_by_id(bn_ids); nil
+AmazonBrowseNode.transaction do
+  CrawlJob.transaction do
+    (1..10).each do |p|
+      bns.each do |bn|
+        bn.search(:search_index => 'Electronics', :page => p)
+      end
+    end
+  end
+end

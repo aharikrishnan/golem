@@ -178,7 +178,7 @@ end
 def go_to_work!
   #Thread.abort_on_exception = truej
   threads = []
-  AWS_IDENTITIES[0..0].each do |identity|
+  AWS_IDENTITIES.each do |identity|
     Worker.new(identity)
   end
 end
