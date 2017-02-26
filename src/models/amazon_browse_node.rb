@@ -1,8 +1,24 @@
 class AmazonBrowseNode < ActiveRecord::Base
   #serialize :path_ids, Array
   #serialize :path_names, Array
+  belongs_to :source, :class_name => 'Crawl', :foreign_key => :source_id
+
   self.inheritance_column = :_type_disabled
   self.primary_key = :id
+
+  def leaf_nodes
+    AmazonBrowseNode.all(:conditions => ["type = ? AND path_ids LIKE ?",'leaf', "%#{self[:id]}%"]).select{|a|a.path_ids =~ /\b#{self[:id]}\b/} end
+
+  # :search_index
+  # :bn
+  # :page
+  def search opts={}
+    crawl_options = opts.merge(:bn => self[:id])
+    cj = CrawlJob.new(:input => crawl_options)
+    cj.type = 'amazon search'
+    cj.save
+    puts cj.inspect
+  end
 
   def self.path
     JSON.parse(path)

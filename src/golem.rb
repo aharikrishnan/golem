@@ -18,6 +18,15 @@ class Golem
     end
   end
 
+  def get_amazon_products_under bn, search_index
+    bns = AmazonBrowseNode.find_by_id(bn_id).presence || AmazonBrowseNode.find_by_name(bn_id)
+    (1..10).each do |page|
+      bns.leaf_nodes.each do |leaf|
+        leaf.search :bn => bn_id, :search_index => search_index, :page => page
+      end
+    end
+  end
+
   def get_amazon_products bn_id
     bns = AmazonBrowseNode.find_all_by_id(bn_id).presence || AmazonBrowseNode.find_all_by_name(bn_id)
     bns.each do |bn|

@@ -15,6 +15,7 @@ require 'mysql'
 require 'time'
 require 'uri'
 require 'yaml'
+require 'delayed_job'
 
 PROJECT_ROOT = Pathname.new(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 ENDPOINT = "webservices.amazon.com"
