@@ -32,7 +32,8 @@ AmazonBrowseNode.transaction do
   CrawlJob.transaction do
     (1..10).each do |p|
       bns.each do |bn|
-        bn.search(:search_index => 'Electronics', :page => p)
+        #bn.search(:search_index => 'Electronics', :page => p)
+        bn.search(:search_index => 'Shoes', :page => p)
       end
     end
   end
@@ -44,8 +45,9 @@ Dir.foreach("/home/hari/amazon/flash/tmp/.").each do |file|
   if file =~/^search*/
     #bn = file.scan(/\d+/).first
     _, bn, page = file.match(/([0-9]+).([0-9]+)/).to_a
-    uid ="a-s-#{bn}"
-    Crawl.find_by_uid(uid).try(:delete)
+    uid ="a-s-#{bn}-#{page}"
+    c = Crawl.find_by_uid(uid)
+    next if c.present?
     c=Crawl.new :uid => uid, :fields => {:bn => bn,:page => page, :search_index => 'Shoes'}, :dump => File.read("/home/hari/amazon/flash/tmp/#{file}"), :dump_type => 'xml'
     c.type = 'amazon search'
     c.save
@@ -94,4 +96,14 @@ Dir.foreach("#{out_path}/.").each_with_index do |file, index|
     puts e.message
   end
   sleep 1 if (index%100 == 0)
+end
+
+
+bns = ["11194456011", "13397491", "13755271", "13838451", "241127011", "289867", "289918", "289920", "289940", "3304320011", "3737631", "3737721", "3741281", "3741301", "3741611", "3741631", "404433011", "678540011", "678541011", "678542011"]
+
+bns.each do |bn|
+  uids = Crawl.all(:select => "uid", :conditions => "uid like 'a-s%-#{bn}-%'")
+  puts "To process #{uids.length}"
+  uids.each do |uid|
+  end
 end
