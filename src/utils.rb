@@ -37,3 +37,61 @@ AmazonBrowseNode.transaction do
     end
   end
 end
+
+
+load '/home/hari/codebase/golem/src/init.rb'
+Dir.foreach("/home/hari/amazon/flash/tmp/.").each do |file|
+  if file =~/^search*/
+    #bn = file.scan(/\d+/).first
+    _, bn, page = file.match(/([0-9]+).([0-9]+)/).to_a
+    uid ="a-s-#{bn}"
+    Crawl.find_by_uid(uid).try(:delete)
+    c=Crawl.new :uid => uid, :fields => {:bn => bn,:page => page, :search_index => 'Shoes'}, :dump => File.read("/home/hari/amazon/flash/tmp/#{file}"), :dump_type => 'xml'
+    c.type = 'amazon search'
+    c.save
+  end
+end
+
+
+require 'rubygems'
+require 'json'
+require 'pathname'
+
+out_path = File.expand_path("/home/hari/babi/out/")
+img_out_path = Pathname.new(File.expand_path("/home/hari/babi/img/"))
+
+bn = "1020003"
+Dir.foreach("#{out_path}/.").each_with_index do |file, index|
+  fp = File.join(out_path, file)
+  next if !File.file?(fp) || !(file =~ /^#{bn}/)
+  bn_path = file.match(/[0-9_]+/)
+  puts fp
+  json = JSON.parse(File.read(fp)) rescue nil
+  next if json.nil?
+  begin
+    products = json['data']['products'] || []
+    puts products.length
+    products.each do |p|
+      sin = p["sin"]
+      image = p["image"]
+      next if image.nil?
+      image_url = image.sub(/hei=[0-9]+&wid=[0-9]+/, 'hei=299&wid=299')
+      image_file = File.expand_path(File.join(img_out_path, "#{sin}.jpg"))
+      if !File.exists? image_file
+      `curl -o '#{image_file}' '#{image_url}'`
+      end
+      if File.exists? image_file
+        tar_file_name = "#{bn_path}.tar"
+        tar_file = Pathname.new(File.join(img_out_path, tar_file_name))
+        rel_path = Pathname.new(image_file).relative_path_from(img_out_path)
+        `cd '#{File.join(img_out_path)}' && tar --append --file=#{tar_file} #{rel_path}`
+        `rm #{image_file}`
+      else
+        puts "Failed: #{image_url}"
+      end
+    end
+  rescue Exception => e
+    puts e.message
+  end
+  sleep 1 if (index%100 == 0)
+end
