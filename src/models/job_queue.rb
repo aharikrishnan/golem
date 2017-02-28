@@ -5,10 +5,7 @@ class CrawlJob < ActiveRecord::Base
 
   def create_crawl resp
     begin
-      search_index = self.input[:search_index] || "Electronics"
-      bn= self.input[:bn]
-      page = self.input[:page]||1
-      uid =  "a-s-#{search_index}-#{bn}-#{page}"
+      uid =  self.get_uid
       Crawl.create :uid => uid,
         :type => self.type,
         :fields => self.input,
@@ -19,9 +16,32 @@ class CrawlJob < ActiveRecord::Base
     end
   end
 
+  def default_search_index
+    "Fashion"
+  end
+
+  def get_uid
+    search_index = self.input[:search_index] || default_search_index
+    bn= self.input[:bn]
+    page = self.input[:page]||1
+    uid =  "a-s-#{search_index}-#{bn}-#{page}"
+  end
+
+  def already_crawled?
+    uid = self.get_uid
+    c = Crawl.find_by_uid(uid)
+    c.present?
+  end
+
   def self.assign_job!
     CrawlJob.transaction do
       j=CrawlJob.find_by_status(nil)
+      while j.already_crawled? do
+        facepalm "duplicado, ignorando #{j.id}"
+        j.status = 'duplicate'
+        j.save
+        j=CrawlJob.find_by_status(nil)
+      end
       j.status = 'assigned'
       j.save
       j
@@ -180,5 +200,6 @@ def go_to_work!
   threads = []
   AWS_IDENTITIES.each do |identity|
     Worker.new(identity)
+    sleep 1 # prevent deadlock
   end
 end

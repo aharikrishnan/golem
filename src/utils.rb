@@ -33,11 +33,12 @@ AmazonBrowseNode.transaction do
     (1..10).each do |p|
       bns.each do |bn|
         #bn.search(:search_index => 'Electronics', :page => p)
-        bn.search(:search_index => 'Shoes', :page => p)
+        #bn.search(:search_index => 'Shoes', :page => p); nil
+        bn.search(:search_index => 'Fashion', :page => p); nil
       end
     end
   end
-end
+end; nil
 
 
 load '/home/hari/codebase/golem/src/init.rb'
@@ -107,3 +108,58 @@ bns.each do |bn|
   uids.each do |uid|
   end
 end
+
+
+
+require 'rubygems'
+require 'pathname'
+require 'nokogiri'
+
+def add_img_to_tar opts={}
+  image_url = opts[:url]
+  image_file = File.expand_path(opts[:img])
+  tar_file = File.expand_path(opts[:tar])
+
+  tar_dir = File.dirname(tar_file)
+  tar_file_name = File.basename(tar_file)
+
+  if !File.exists? image_file
+    `curl -o '#{image_file}' '#{image_url}'`
+  else
+    puts "From cache"
+  end
+  if File.exists? image_file
+    rel_path = Pathname.new(image_file).relative_path_from(Pathname.new(tar_dir))
+    `cd '#{File.join(tar_dir)}' && tar --append --file=#{tar_file_name} #{rel_path}`
+    `rm #{image_file}`
+  else
+    puts "Failed: #{image_url}"
+  end
+end
+
+out_path = File.expand_path("/home/hari/amazon/flash/data")
+img_out_path = Pathname.new(File.expand_path("/home/hari/amazon/flash/img"))
+[out_path, img_out_path].each do |p|
+  `mkdir -p #{p}` if !File.directory?(p)
+end
+Dir.foreach("#{out_path}/.").each_with_index do |file, index|
+  fp = File.expand_path(File.join(( File.join(out_path, file) )))
+  puts "#{fp} --- #{File.file?(fp)}"
+  next if !File.file?(fp)
+  doc = Nokogiri::XML(File.read(fp))
+  items = doc.css('Items> Item')
+  puts "To process #{items.length}"
+  items.each do |item|
+    asin = item.css('>ASIN').text
+    img = item.css("> LargeImage > URL").text.to_s
+    puts img
+    img.gsub!(/.jpg$/, '._SL299_.jpg')
+    puts img
+    category = item.css('> BrowseNodes > BrowseNode > BrowseNodeId').text.to_s.strip
+    tar_file = File.expand_path(File.join(img_out_path, "#{category}.tar"))
+    img_file = File.expand_path(File.join(img_out_path, "#{asin}.jpg"))
+    add_img_to_tar :img => img_file, :tar => tar_file, :url => img
+  end
+  sleep 1
+end
+

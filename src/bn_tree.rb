@@ -1,6 +1,6 @@
 # encoding: utf-8
 #@TODO Fix code to use batch browse node lookup api
-#      Speed up 10x
+#      Speed up 10x - Done
 
 #init_worker __FILE__.match(/\d/).first.to_i rescue 0
 init_worker 0
@@ -22,6 +22,7 @@ def parse_root_bn_ids_from_html html
 end
 
 def get_root_bn_ids
+  # http://docs.aws.amazon.com/AWSECommerceService/latest/DG/LocaleUS.html
   url = "https://www.amazon.com/gp/site-directory/ref=nav_shopall_fullstore"
   tmpfile = 'amazon-sitemap.html'
   resp = Http.get url, tmpfile

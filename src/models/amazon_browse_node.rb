@@ -4,11 +4,16 @@ class AmazonBrowseNode < ActiveRecord::Base
   #serialize :path_names, Array
   belongs_to :source, :class_name => 'Crawl', :foreign_key => :source_id
 
+  def self.roots
+    self.scoped(:conditions => "type = 'root'")
+  end
+
   self.inheritance_column = :_type_disabled
   self.primary_key = :id
 
   def leaf_nodes
-    AmazonBrowseNode.all(:conditions => ["type = ? AND path_ids LIKE ?",'leaf', "%#{self[:id]}%"]).select{|a|a.path_ids =~ /\b#{self[:id]}\b/} end
+    AmazonBrowseNode.all(:conditions => ["type = ? AND path_ids LIKE ?",'leaf', "%#{self[:id]}%"]).select{|a|a.path_ids =~ /\b#{self[:id]}\b/}
+  end
 
   # :search_index
   # :bn
