@@ -37,7 +37,7 @@ class AmazonProduct < ActiveRecord::Base
         brand = item.css("> ItemAttributes Brand").text.strip rescue ""
         bn_ids = item.css('BrowseNodes > BrowseNode').map{|bn| bn.css(">BrowseNodeId").text.to_s.strip}
         attrs = {:title => title, :model => model, :brand => brand, :source_id => crawl.id, :bn_id => bn_ids.first}
-        p = self.find(asin)
+        p = self.find(asin) rescue nil
         if p.present?
           new_attrs = Hash[attrs.select{|k, v|v.present?}]
           new_attrs = p.attributes.merge(new_attrs)

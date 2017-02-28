@@ -163,3 +163,15 @@ Dir.foreach("#{out_path}/.").each_with_index do |file, index|
   sleep 1
 end
 
+
+
+
+Crawl.scoped(:conditions  => 'type="amazon search"').find_in_batches(:batch_size => 1000) do |crawls|
+  AmazonBrowseNode.transaction do
+    ProductBrowseNodeMapping.transaction do
+      crawls.each do |c|
+        c.populate
+      end
+    end
+  end
+end
