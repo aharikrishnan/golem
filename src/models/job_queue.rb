@@ -116,7 +116,7 @@ class Worker
       "SearchIndex" => search_index,
       "BrowseNode" => bn,
       "ItemPage" => page,
-      "ResponseGroup" => "BrowseNodes,ItemAttributes,Similarities"
+      "ResponseGroup" => "BrowseNodes,ItemAttributes,Images,Similarities"
     }
     # Set current timestamp if not set
     params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
