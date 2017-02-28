@@ -20,34 +20,14 @@ class Crawl < ActiveRecord::Base
   end
 
   def populate
+    debug self.type
     case self[:type]
     when 'amazon browse node tree' then
-      a_len, c_len = self.ancestors.length, self.childrens.length
-      type = if a_len == 0 && c_len == 0
-               'bud'
-             elsif a_len == 0
-               'root'
-             elsif c_len == 0
-               'leaf'
-             else
-               'branch'
-             end
-      ids = []
-      names = []
-      ans = self.path_of_ancestors
-      ans.each do |an|
-        ids << an.map{|a|a[:id]}.reverse.join("|")
-        names << an.map{|a|a[:name]}.reverse.join("|")
-      end
-      bn = AmazonBrowseNode.new :name => self.fields[:name],
-        :path_ids => ids.join("$$"),
-        :path_names => names.join("$$"),
-        :source_id => self[:id],
-        :type => type
-      bn.id = self.fields[:id]
-      bn.save
-      bn
+      AmazonBrowseNode.create_from_crawl(self)
+    when 'amazon search' then
+      AmazonProduct.create_from_crawl(self)
     else
+      facepalm "#{self[:type]} not supported yet"
       nil
     end
   rescue Exception => e

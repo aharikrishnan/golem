@@ -64,8 +64,37 @@ class AmazonBrowseNode < ActiveRecord::Base
   def self.get_children_from_xml_doc xml_doc
     xml_doc.xpath('BrowseNode/Children/BrowseNode')
   end
+
   def self.get_ancestors_from_xml_doc xml_doc
     xml_doc.xpath('BrowseNode/Ancestors/BrowseNode')
+  end
+
+  def create_from_crawl crawl
+    a_len, c_len = crawl.ancestors.length, crawl.childrens.length
+    type = if a_len == 0 && c_len == 0
+             'bud'
+           elsif a_len == 0
+             'root'
+           elsif c_len == 0
+             'leaf'
+           else
+             'branch'
+           end
+    ids = []
+    names = []
+    ans = crawl.path_of_ancestors
+    ans.each do |an|
+      ids << an.map{|a|a[:id]}.reverse.join("|")
+      names << an.map{|a|a[:name]}.reverse.join("|")
+    end
+    bn = AmazonBrowseNode.new :name => crawl.fields[:name],
+      :path_ids => ids.join("$$"),
+      :path_names => names.join("$$"),
+      :source_id => crawl[:id],
+      :type => type
+    bn.id = crawl.fields[:id]
+    bn.save
+    bn
   end
 
 end
