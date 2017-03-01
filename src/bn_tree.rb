@@ -86,6 +86,10 @@ def get_node_from_html_doc x
 end
 
 def page_to_forest page_url
+  domain = "http://www.sears.com/"
+  unless page_url.starts_with?('http')
+    page_url = "#{domain}#{page_url}"
+  end
   resp = Http.get(page_url)
   doc = Nokogiri::HTML(resp)
   forest = doc.css('section').map do |root|
