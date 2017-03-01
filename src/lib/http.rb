@@ -6,7 +6,8 @@
 class Http
   class << self
 
-    def get url, tmpfile='blah'
+    def get url, tmpfile=nil
+      tmpfile = File.basename(url) if tmpfile.nil?
       tmpfile = data_file tmpfile
       resp = nil
       # -s = Shutup

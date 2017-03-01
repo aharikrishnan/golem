@@ -34,7 +34,8 @@ AmazonBrowseNode.transaction do
       bns.each do |bn|
         #bn.search(:search_index => 'Electronics', :page => p)
         #bn.search(:search_index => 'Shoes', :page => p); nil
-        bn.search(:search_index => 'Fashion', :page => p); nil
+        #bn.search(:search_index => 'Fashion', :page => p); nil
+        bn.search(:search_index => 'HomeGarden', :page => p); nil
       end
     end
   end
@@ -173,5 +174,16 @@ Crawl.scoped(:conditions  => 'type="amazon search"').find_in_batches(:batch_size
         c.populate
       end
     end
+  end
+end
+
+
+
+# populate root_bn_ids in amazon_browse_nodes
+AmazonBrowseNode.transaction do
+  AmazonBrowseNode.all(:conditions => "type != 'root'").each do |abn|
+    root_ids = abn.path_ids.split("$$").map{|p| p.split("|").first.strip}.join("|")
+    abn.root_bn_ids = root_ids
+    abn.save if abn.changed?
   end
 end

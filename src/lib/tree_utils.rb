@@ -112,5 +112,23 @@ class TreeUtils
       info "Tree Length #{tree.length}"
       File.open(bn_file,'w'){|f|f.write(tree.to_yaml)}
     end
+
+
+    # Tree structure:
+    #   {:id => '', :name => '', children => [..]}
+    def dfs(*args, &blk)
+      tree = args[0]
+      path = args[1] || []
+      return if tree.blank?
+      blk.call(tree, path)
+
+      if tree[:children].present?
+        new_path = path + [{:name => tree[:name], :id => tree[:id]}]
+        tree[:children].each do |node|
+          dfs(node,new_path,&blk)
+        end
+      end
+    end
+
   end
 end
