@@ -34,11 +34,9 @@ def rel_path? path
 end
 
 def each_files pat=nil, &blk
-  files = Dir[File.join(PROJECT_ROOT, pat)]
-  puts "Found #{files.length} file(s)/folder(s) to process"
-  files.each do |file_name|
+  Dir.foreach(File.join(PROJECT_ROOT, pat)) do |file_name|
     file_path = file_name
-    # file_path = File.join(project_root_path, pat, file_name)
+    file_path = File.join(project_root_path, pat, file_name)
     puts file_path
     next if !File.file?(file_path)
     debug "> Found #{file_path}"

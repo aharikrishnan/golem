@@ -191,16 +191,18 @@ end
 
 # load json files to DB
 load '/home/hari/codebase/golem/src/init.rb'
-each_files('out/*.raw.json') do |file|
-  next unless file =~ /.raw.json$/
+out_path = File.expand_path('/home/hari/babi/out/.')
+suffix = '.raw.json'
+each_files(out_path) do |file|
+  next unless file =~ /#{suffix}$/
   json_data = JSON.parse(File.read(file))
-  _, bns, page = file.match(/([0-9_]+).([0-9]+).raw.json/).to_a
+  _, bns, page = file.match(/([0-9_]+).([0-9]+)#{suffix}/).to_a
   bn = bns.split("_").last.strip
   uid ="s-s-#{bn}-#{page}"
   c = Crawl.find_by_uid(uid)
   next if c.present?
   c=Crawl.new :uid => uid, :fields => {:bn => bn,:page => page}, :dump => json_data, :dump_type => 'json'
-  c.type = 'amazon search'
+  c.type = 'sears search'
   c.save
 end
 
