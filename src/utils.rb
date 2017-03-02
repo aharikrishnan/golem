@@ -204,3 +204,11 @@ each_files(out_path) do |file|
   c.save
 end
 
+
+Crawl.find_in_batches(:batch_size => 1000){|cs|
+  Crawl.transaction{
+    SearsProduct.transaction do
+      cs.map(&:populate);nil
+    end
+  }
+}
