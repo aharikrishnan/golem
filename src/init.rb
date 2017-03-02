@@ -33,6 +33,19 @@ def rel_path? path
   !path.starts_with? '/'
 end
 
+def each_files pat=nil, &blk
+  files = Dir[File.join(PROJECT_ROOT, pat)]
+  puts "Found #{files.length} file(s)/folder(s) to process"
+  files.each do |file_name|
+    file_path = file_name
+    # file_path = File.join(project_root_path, pat, file_name)
+    puts file_path
+    next if !File.file?(file_path)
+    debug "> Found #{file_path}"
+    blk.call(file_path)
+  end
+end
+
 def require_files pat
   Dir[abs_path(pat)].each do |file|
     require_file file
