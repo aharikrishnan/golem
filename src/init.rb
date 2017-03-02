@@ -33,8 +33,12 @@ def rel_path? path
   !path.starts_with? '/'
 end
 
+def get_path rel_or_abs_path
+  full_path = rel_path?(rel_or_abs_path)? File.join(PROJECT_ROOT, rel_or_abs_path) : rel_or_abs_path
+end
+
 def each_files pat=nil, &blk
-  Dir.foreach(File.join(PROJECT_ROOT, pat)) do |file_name|
+  Dir.foreach(get_path(pat)) do |file_name|
     file_path = file_name
     file_path = File.join(project_root_path, pat, file_name)
     puts file_path
@@ -45,14 +49,14 @@ def each_files pat=nil, &blk
 end
 
 def require_files pat
-  Dir[abs_path(pat)].each do |file|
+  Dir[get_path(pat)].each do |file|
     require_file file
   end
 end
 
 def require_file file
   file.sub!(/$/, '.rb') unless file =~ /\.rb$/
-  full_path = rel_path?(file)? File.join(PROJECT_ROOT, file) : file
+  full_path = get_path file
   #require File.join(PROJECT_ROOT, file)
   load full_path
 end
