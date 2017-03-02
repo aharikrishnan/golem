@@ -13,8 +13,7 @@ class Crawl < ActiveRecord::Base
     when 'yaml' then
       YAML.parse(self[:dump]) rescue {}
     when 'json' then
-      YAML.load(self[:dump]) rescue {}
-      #JSON.parse(self[:dump]) rescue {}
+      JSON.parse(self[:dump]) rescue {}
     else
       self[:dump]
     end

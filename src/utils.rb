@@ -32,8 +32,8 @@ AmazonBrowseNode.transaction do
   CrawlJob.transaction do
     (1..10).each do |p|
       bns.each do |bn|
-        #'Electronics' 'Shoes' 'Fashion' 'HomeGarden'
-        bn.search(:search_index => 'Tools', :page => p); nil
+        #'Electronics' 'Shoes' 'Fashion' 'HomeGarden' 'Tools' 'Appliances'
+        bn.search(:search_index => 'Appliances', :page => p); nil
       end
     end
   end
@@ -193,9 +193,9 @@ out_path = File.expand_path('/home/hari/babi/out/.')
 suffix = '.raw.json'
 each_files(out_path) do |file|
   next unless file =~ /#{suffix}$/
-  json_data = JSON.parse(File.read(file))
+  json_data = File.read(file)
   _, bns, page = file.match(/([0-9_]+).([0-9]+)#{suffix}/).to_a
-  bn = bns.split("_").last.strip
+  bn = bns
   uid ="s-s-#{bn}-#{page}"
   c = Crawl.find_by_uid(uid)
   next if c.present?
