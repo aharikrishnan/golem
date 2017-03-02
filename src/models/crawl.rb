@@ -10,6 +10,8 @@ class Crawl < ActiveRecord::Base
       Nokogiri::XML(self[:dump])
     when 'html' then
       Nokogiri::HTML.fragment(self[:dump])
+    when 'json' then
+      JSON.parse(self[:dump]) rescue {}
     else
       self[:dump]
     end
@@ -83,10 +85,6 @@ class Crawl < ActiveRecord::Base
     doc = Nokogiri::XML(xml)
     doc.remove_namespaces!
     doc
-  end
-
-  def self.compact_str! str
-    str.gsub!(/\n/, '').gsub!(/[\s]+/, ' ')
   end
 
 end

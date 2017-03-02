@@ -111,7 +111,7 @@ def get_ancestors_from_xml_doc xml_doc
 end
 
 def compact_str! str
-   Crawl.compact_str!(str)
+   str.gsub!(/\n/, ' ').gsub!(/[\s\t]+/, ' ')
 end
 
 def run_id; @run_id; end
@@ -155,3 +155,4 @@ end
 def reload
   require_file __FILE__
 end
+
