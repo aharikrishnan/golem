@@ -51,7 +51,7 @@ class Crawl < ActiveRecord::Base
         facepalm "Already crawled #{data[:id]}"
         next
       else
-        crawl = Crawl.new :uid => data[:id], :fields => data, :dump => compact_str!(bn.to_s), :dump_type => 'xml'
+        crawl = Crawl.new :uid => data[:id], :fields => data, :dump => compact_str(bn.to_s), :dump_type => 'xml'
         crawl.type = 'amazon browse node tree'
         crawl.save
         crawls << crawl

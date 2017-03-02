@@ -12,10 +12,10 @@ class SearsProduct < ActiveRecord::Base
     items = data['products']
     if items.present?
       items.each do |item|
-        sin = item['sin'].compact_str!
-        title =  item['name'].compact_str!
-        brand =  item['brandName'].compact_str!
-        upc =  item['upc'].compact_str!
+        sin = compact_str item['sin']
+        title = compact_str item['name']
+        brand = compact_str item['brandName']
+        upc = compact_str item['upc']
         attrs = {:title => title, :brand => brand, :upc => upc, :source_id => crawl.id, :bn_id => leaf}
         add_product sin, attrs
       end

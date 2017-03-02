@@ -110,8 +110,8 @@ def get_ancestors_from_xml_doc xml_doc
   AmazonBrowsNode.get_ancestors_from_xml_doc xml_doc
 end
 
-def compact_str! str
-   str.gsub!(/\n/, ' ').gsub!(/[\s\t]+/, ' ')
+def compact_str str
+   str.to_s.gsub(/\n/, ' ').gsub(/[\s\t]+/, ' ')
 end
 
 def run_id; @run_id; end
