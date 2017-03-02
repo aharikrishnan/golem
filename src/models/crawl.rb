@@ -28,6 +28,8 @@ class Crawl < ActiveRecord::Base
       AmazonBrowseNode.create_from_crawl(self)
     when 'amazon search' then
       AmazonProduct.create_from_crawl(self)
+    when 'sears search' then
+      SearsProduct.create_from_crawl(self)
     else
       facepalm "#{self[:type]} not supported yet"
       nil
