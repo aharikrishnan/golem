@@ -10,8 +10,11 @@ class Crawl < ActiveRecord::Base
       Nokogiri::XML(self[:dump])
     when 'html' then
       Nokogiri::HTML.fragment(self[:dump])
+    when 'yaml' then
+      YAML.parse(self[:dump]) rescue {}
     when 'json' then
-      JSON.parse(self[:dump]) rescue {}
+      YAML.load(self[:dump]) rescue {}
+      #JSON.parse(self[:dump]) rescue {}
     else
       self[:dump]
     end
