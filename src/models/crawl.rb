@@ -25,7 +25,6 @@ class Crawl < ActiveRecord::Base
   end
 
   def populate
-    debug self.type
     case self[:type]
     when 'amazon browse node tree' then
       AmazonBrowseNode.create_from_crawl(self)

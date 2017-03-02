@@ -16,7 +16,7 @@ class SearsProduct < ActiveRecord::Base
         title = compact_str item['name']
         brand = compact_str item['brandName']
         upc = compact_str item['upc']
-        attrs = {:title => title, :brand => brand, :upc => upc, :source_id => crawl.id, :bn_id => leaf}
+        attrs = {:title => title, :brand => brand, :upc => upc, :source_id => crawl.id, :bn_id => leaf, :bn_ids => [leaf]}
         add_product sin, attrs
       end
     else
