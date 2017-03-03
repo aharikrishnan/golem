@@ -20,7 +20,7 @@ class SearsProduct < ActiveRecord::Base
         add_product sin, attrs
       end
     else
-      facepalm "NOT processing #{file}  Items not found...", :silent => true
+      facepalm "NOT processing #{crawl.uid}  Items not found...", :silent => true
     end
   end
 end

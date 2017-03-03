@@ -13,8 +13,9 @@ class AmazonProduct < ActiveRecord::Base
         model = item.css(" > ItemAttributes Model").text.strip rescue ""
         brand = item.css("> ItemAttributes Brand").text.strip rescue ""
         upc = item.css("> ItemAttributes UPC").text.strip rescue ""
+        ean = item.css("> ItemAttributes EAN").text.strip rescue ""
         bn_ids = item.css('BrowseNodes > BrowseNode').map{|bn| bn.css(">BrowseNodeId").text.to_s.strip}
-        attrs = {:title => title, :model => model, :brand => brand, :upc => upc, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
+        attrs = {:title => title, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
 
         add_product asin, attrs
 

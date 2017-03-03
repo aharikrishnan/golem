@@ -32,8 +32,8 @@ AmazonBrowseNode.transaction do
   CrawlJob.transaction do
     (1..10).each do |p|
       bns.each do |bn|
-        #'Electronics' 'Shoes' 'Fashion' 'HomeGarden' 'Tools' 'Appliances'
-        bn.search(:search_index => 'Appliances', :page => p); nil
+        #'Electronics' 'Shoes' 'Fashion' 'HomeGarden' 'Tools' 'Appliances' 'OfficeProducts' 'Wireless'
+        bn.search(:search_index => 'Wireless', :page => p); nil
       end
     end
   end
