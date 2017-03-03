@@ -212,3 +212,88 @@ Crawl.find_in_batches(:batch_size => 1000){|cs|
     end
   }
 }
+
+# repopulate amazon products from search
+Crawl.scoped(:conditions => "uid like 'a-s-%'").find_in_batches(:batch_size => 10000) do |cs|
+  AmazonProduct.transaction do
+    cs.each do |c|
+      c.populate
+    end
+  end
+end
+
+## stats collector
+a = Hash[File.read("/home/ubuntu/data/csvs/bn.csv.stat").split("\n").map{|r|r.to_s.strip.split("\t")}]; nil
+b = Hash[File.read("/home/ubuntu/data/csvs/bn.db.2.stat").split("\n").map{|r|r.to_s.strip.split("\t")}]; nil
+c = {}
+a.each do|k, v|
+  if b.has_key?(k)
+    c[k] = (b[k].to_f/a[k].to_f) * 100
+  end
+end; nil
+puts c.length
+
+d = c.select{|k, v|v< 50}
+
+
+File.open("/tmp/bn_diff", 'w'){|f|f.write(c.to_a.map{|r|r.join("\t")}.join("\n"))}
+
+
+## search index population
+r = [ ["1020004", "Baby", "Baby"],
+ ["1020005", "Automotive", "Automotive"],
+ ["1020006", "Fitness & Sports", "SportingGoods"],
+ ["1020009", "Gifts", "GiftCards"],
+ ["1023303", "Beauty", "Beauty"],
+ ["1023816", "Home Services", "Appliances"],
+ ["1024539", "Health & Wellness", "HealthPersonalCare"],
+ ["1029616", "Books & Magazines", "Books"],
+ ["1030488", "Food & Grocery", "Grocery"],
+ ["1055398", "Home & Kitchen", "HomeGarden"],
+ ["1064954", "Office Products", "OfficeProducts"],
+ ["10677469011", "Vehicles", "Vehicles"],
+ ["11091801", "Musical Instruments", "MusicalInstruments"],
+ ["11260432011", "Handmade Products", "Handmade"],
+ ["1270629454", "Home Improvement", "Tools"],
+ ["1325032343", "Clothing, Shoes & Jewelry", "Fashion"],
+ ["133140011", "Kindle Store", "KindleStore"],
+ ["1342036019", "Connected Solutions", "Electronics"],
+ ["1348654256", "Home", "Fashion"],
+ ["13727921011", "Alexa Skills", "Fashion"],
+ ["15684181", "Automotive", "Automotive"],
+ ["16310091", "Industrial & Scientific", "Industrial"],
+ ["16310101", "Grocery & Gourmet Food", "Grocery"],
+ ["163856011", "Digital Music", "MP3Downloads"],
+ ["165793011", "Toys & Games", "Toys"],
+ ["165796011", "Baby Products", "Baby"],
+ ["172282", "Electronics", "Electronics"],
+ ["228013", "Tools & Home Improvement", "Tools"],
+ ["229534", "Software", "Software"],
+ ["2334129011", "Custom Stores", "Fashion"],
+ ["2334150011", "Special Features Stores", "Fashion"],
+ ["2335752011", "Cell Phones & Accessories", "Wireless"],
+ ["2350149011", "Apps & Games", "MobileApps"],
+ ["2617941011", "Arts, Crafts & Sewing", "ArtsAndCrafts"],
+ ["2619525011", "Appliances", "Appliances"],
+ ["2619533011", "Pet Supplies", "PetSupplies"],
+ ["2625373011", "Movies & TV", "Movies"],
+ ["283155", "Books", "Books"],
+ ["2972638011", "Patio, Lawn & Garden", "LawnAndGarden"],
+ ["3375251", "Sports & Outdoors", "SportingGoods"],
+ ["3561432011", "Credit & Payment Cards", "GiftCards"],
+ ["3760901", "Health & Household", "HealthPersonalCare"],
+ ["3760911", "Beauty & Personal Care", "Beauty"],
+ ["468642", "Video Games", "VideoGames"],
+ ["4991425011", "Collectibles & Fine Art", "Collectibles"],
+ ["5174", "CDs & Vinyl", "Music"],
+ ["599858", "Magazine Subscriptions", "Magazines"],
+ ["7141123011", "Clothing, Shoes & Jewelry", "Fashion"],
+ ["9013971011", "Video Shorts", "UnboxVideo"] ]
+r.each do |id, name, search_index|
+  y = AmazonBrowseNode.find_by_id(id);
+  next if y.blank?
+  y.search_index = search_index
+  y.save
+end
+
+AmazonBrowseNode.roots.scoped(:conditions => {:id => %w(133140011 13727921011 16310101 163856011 229534 2334129011 2334150011 2350149011 2625373011  283155 3561432011 468642 5174  599858 9013971011).to_a}).update_all :status => 'nocrawl'

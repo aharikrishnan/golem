@@ -8,6 +8,10 @@ class AmazonBrowseNode < ActiveRecord::Base
     self.scoped(:conditions => "type = 'root'")
   end
 
+  def self.to_crawl
+    self.scoped(:conditions => "status  != 'nocrawl'")
+  end
+
   self.inheritance_column = :_type_disabled
   self.primary_key = :id
 
