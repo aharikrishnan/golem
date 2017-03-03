@@ -31,6 +31,16 @@ class AmazonBrowseNode < ActiveRecord::Base
     puts cj.inspect
   end
 
+  def self.item_lookup_by_upc upcs
+    upcs.uniq
+    upcs.each_slice(10) do |upc_list|
+      ids = upc_list.join(",")
+      cj = CrawlJob.new(:input => {:ids => ids, :type => 'UPC', :search_index => 'All'})
+      cj.type = 'amazon upc lookup'
+      cj.save
+    end
+  end
+
   def self.path
     JSON.parse(path)
   end

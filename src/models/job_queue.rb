@@ -135,11 +135,42 @@ class Worker
     request_url
   end
 
+  def amazon_upc_lookup opts
+    search_index = opts[:search_index] || "All"
+    params = {
+      "Service" => "AWSECommerceService",
+      "Operation" => "ItemLookup",
+      "IdType" => opts[:type],
+      "ItemId" => opts[:ids],
+      "AWSAccessKeyId" => self.key,
+      "AssociateTag" => self.tag,
+      "SearchIndex" => search_index,
+      "ResponseGroup" => "BrowseNodes,ItemAttributes,Images,Similarities"
+    }
+    # Set current timestamp if not set
+    params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
+    # Generate the canonical query
+    debug params.inspect
+    canonical_query_string = params.sort.collect do |key, value|
+      [URI.escape(key.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]")), URI.escape(value.to_s, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))].join('=')
+    end.join('&')
+    # Generate the string to be signed
+    string_to_sign = "GET\n#{ENDPOINT}\n#{REQUEST_URI}\n#{canonical_query_string}"
+    # Generate the signature required by the Product Advertising API
+    signature = Base64.encode64(OpenSSL::HMAC.digest(OpenSSL::Digest.new('sha256'), self.secret, string_to_sign)).strip()
+    # Generate the signed URL
+    request_url = "http://#{ENDPOINT}#{REQUEST_URI}?#{canonical_query_string}&Signature=#{URI.escape(signature, Regexp.new("[^#{URI::PATTERN::UNRESERVED}]"))}"
+    debug request_url
+    request_url
+  end
+
   def get_url_from crawl_job
     type = crawl_job[:type]
     url = case type
     when 'amazon search' then
       self.amazon_search(crawl_job.input)
+    when 'amazon upc lookup' then
+      self.amazon_upc_lookup(crawl_job.input)
     else
       facepalm "[#{self.tag}]: No entiendo! '#{type}'"
       nil
