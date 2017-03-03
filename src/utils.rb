@@ -33,7 +33,7 @@ AmazonBrowseNode.transaction do
     (1..10).each do |p|
       bns.each do |bn|
         #'Electronics' 'Shoes' 'Fashion' 'HomeGarden' 'Tools' 'Appliances' 'OfficeProducts' 'Wireless'
-        bn.search(:search_index => 'Wireless', :page => p); nil
+        bn.search(:page => p); nil
       end
     end
   end

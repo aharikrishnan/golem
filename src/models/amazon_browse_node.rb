@@ -23,7 +23,8 @@ class AmazonBrowseNode < ActiveRecord::Base
   # :bn
   # :page
   def search opts={}
-    crawl_options = opts.merge(:bn => self[:id])
+    search_index = opts[:search_index] || self.search_index
+    crawl_options = opts.merge(:bn => self[:id], :search_index => search_index)
     cj = CrawlJob.new(:input => crawl_options)
     cj.type = 'amazon search'
     cj.save
