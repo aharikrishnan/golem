@@ -22,9 +22,10 @@ class CrawlJob < ActiveRecord::Base
 
   def get_uid
     search_index = self.input[:search_index] || default_search_index
-    bn= self.input[:bn]
+    bn= self.input[:bn] || self.input[:ids]
     page = self.input[:page]||1
-    uid =  "a-s-#{search_index}-#{bn}-#{page}"
+    p = self.input[:type] || 's'
+    uid =  "a-#{p}-#{search_index}-#{bn}-#{page}"
   end
 
   def already_crawled?
