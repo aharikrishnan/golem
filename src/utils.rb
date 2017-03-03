@@ -28,16 +28,19 @@ AmazonBrowseNode.find_in_batches(:batch_size => 10000){|cs|
 }
 bn_ids = File.read(abs_path('input.lst')).split.uniq.compact; nil
 bns = AmazonBrowseNode.find_all_by_id(bn_ids); nil
-AmazonBrowseNode.transaction do
+
+AmazonBrowseNode.roots.to_crawl.each do |root_bn|
+  bns = root_bn.leaf_nodes
   CrawlJob.transaction do
     (1..10).each do |p|
       bns.each do |bn|
         #'Electronics' 'Shoes' 'Fashion' 'HomeGarden' 'Tools' 'Appliances' 'OfficeProducts' 'Wireless'
-        bn.search(:page => p); nil
+        bn.search(:page => p, :search_index => root_bn.search_index); nil
       end
     end
   end
-end; nil
+  puts "Done #{root_bn.name}"
+end
 
 
 load '/home/hari/codebase/golem/src/init.rb'
