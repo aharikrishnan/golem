@@ -2,6 +2,10 @@
 class AmazonProduct < ActiveRecord::Base
   acts_as_product
 
+  def self.create_from_upc_crawl crawl
+    self.create_from_crawl crawl
+  end
+
   def self.create_from_crawl crawl
     doc = crawl.dump
     items = doc.css('Items > Item')
