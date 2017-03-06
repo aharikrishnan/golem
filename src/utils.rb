@@ -300,3 +300,15 @@ r.each do |id, name, search_index|
 end
 
 AmazonBrowseNode.roots.scoped(:conditions => {:id => %w(133140011 13727921011 16310101 163856011 229534 2334129011 2334150011 2350149011 2625373011  283155 3561432011 468642 5174  599858 9013971011).to_a}).update_all :status => 'nocrawl'
+
+Crawl.scoped(:conditions => {:type => "amazon upc lookup"}).find_in_batches(:batch_size => 1000){|cs|
+  Crawl.transaction{
+    cs.map(&:populate);nil
+  }
+}
+
+a = AmazonProduct.all(:select => "upc").map(&:upc).uniq;
+s = SearsProduct.all(:select => "upc").map(&:upc).uniq;
+a.compact!;
+s.compact!;
+c=a&b;
