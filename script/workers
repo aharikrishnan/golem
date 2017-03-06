@@ -1,0 +1,4 @@
+#! /bin/bash
+
+irb -r ./src/init.rb ./script/start_workers.rb
+
