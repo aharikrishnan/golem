@@ -115,25 +115,47 @@ class AmazonBrowseNode < ActiveRecord::Base
   def self.populate_dag
     t = YAML.load_file(abs_path('data/bntree-amazon'))
     forest = t.select{|k, v|v[:ancestors].nil?}
+    secondary_bn_paths
     @s_path = {}
-    forest.each do |k, r|
-      TreeUtils.dfs(r, [], :node_picker => Proc.new{|node| t[node]}) do |node, path|
-        @s_path[node[:id]] ||= {}
-        spath = @s_path[node[:id]] || {}
-        ids = spath[:ids] || []
-        names = spath[:names] || []
+    if File.exists?(abs_path('data/bntree_paths'))
+      YAML.load_file(abs_path('data/bntree_paths'))
+    else
+      forest.each do |k, r|
+        TreeUtils.dfs(r, [], :node_picker => Proc.new{|node| t[node]}) do |node, path|
+          @s_path[node[:id]] ||= {}
+          spath = @s_path[node[:id]] || {}
+          ids = spath[:ids] || []
+          names = spath[:names] || []
 
-        ans = path
-        ids << ans.map{|a|a[:id]}.join("|")
-        names << ans.map{|a|a[:name]}.join("|")
+          ans = path
+          ids << ans.map{|a|a[:id]}.join("|")
+          names << ans.map{|a|a[:name]}.join("|")
 
-        ids.uniq!
-        names.uniq!
+          ids.uniq!
+          names.uniq!
 
-        @s_path[node[:id]] = {:ids => ids, :names => names}
+          @s_path[node[:id]] = {:ids => ids, :names => names}
+        end
+      end
+      File.open(abs_path('data/bntree_paths'), 'w'){|f|f.write(@s_path.to_yaml)}
+    end
+
+    AmazonBrowseNode.transaction do
+      @s_path.each do |bn_id, path_info|
+        puts path_info.inspect
+        next if path_info.nil?
+        a = AmazonBrowseNode.find(bn_id)
+        next if a.nil?
+        path_names = path_info[:names].join("$$").strip
+        path_ids = path_info[:ids].join("$$").strip
+        if path_names.length && path_ids.length && (a.path_names != path_names || a.path_ids != path_ids)
+          a.path_names = path_names
+          a.path_ids = path_ids
+          a.save
+        end
       end
     end
-    @s_path
+
   end
 
 end

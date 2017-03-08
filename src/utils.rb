@@ -323,4 +323,5 @@ ids.each do |id|
   c.populate
 end
 
-
+#Get all leaf nodes
+l = AmazonBrowseNode.all(:conditions => "path_ids like '%#{root.id}|%' and type='leaf'")
