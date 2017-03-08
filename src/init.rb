@@ -132,6 +132,8 @@ def error msg, opts={}
   else
     raise m
   end
+rescue Encoding::CompatibilityError => e
+  puts "Error'ception: #{e.message}"
 end
 
 def facepalm msg
