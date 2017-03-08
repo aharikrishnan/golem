@@ -43,7 +43,7 @@ class Crawl < ActiveRecord::Base
 
   # Amazon browse node related methods
   def self.create_from_bn_xml bn_xml
-    bns = get_browse_nodes_from_xml(bn_xml.to_s)
+    bns = AmazonBrowseNode.get_browse_nodes_from_xml(bn_xml.to_s)
     crawls = []
     bns.each do |bn|
       data = AmazonBrowseNode.get_node_data_from_xml_doc(bn)

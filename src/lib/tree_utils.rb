@@ -4,6 +4,7 @@ class TreeUtils
   class << self
     def tree
       @bn ||= {}
+      @bn
     end
 
     def visited
@@ -15,7 +16,6 @@ class TreeUtils
       tree[data[:id]] ||={}
       tree[data[:id]].merge!(data)
       info "Set Node: #{data.inspect}"
-      save
     end
 
     def node_visited? bn_id
@@ -36,6 +36,7 @@ class TreeUtils
       else
         facepalm "Already an ancestor"
       end
+      info "#{tree[bn_id]} has #{tree[bn_id][:ancestors].length} ancestors"
     end
 
     def add_child bn_id, child_bn_id
@@ -47,6 +48,7 @@ class TreeUtils
       else
         facepalm "Already a child"
       end
+      info "#{tree[bn_id]} has #{tree[bn_id][:children].length} children"
     end
 
     #def get_nodes_from_xml_doc xml_doc
@@ -63,13 +65,13 @@ class TreeUtils
       return bn_id if node_visited?(bn_id)
       _q.push(bn_id)
 
+      index = 0
       while _q.length > 0 do
         #bn = blk.call(bn_id)
         bns = Http.get_bns _q
         bns.each do |bn|
           bn_data = get_node_data_from_xml_doc(bn)
           set_node(bn_data)
-          debug "Found #{get_children_from_xml_doc(bn).length} children"
           children = get_children_from_xml_doc(bn).map do |child_bn| 
             get_node_data_from_xml_doc(child_bn)
           end
@@ -79,7 +81,6 @@ class TreeUtils
             add_child bn_data[:id], child[:id]
           end
           ancestors = get_ancestors_from_xml_doc(bn)
-          debug "Found #{ancestors.length} ancestors"
           ancestors.each do |parent|
             parent_data = get_node_data_from_xml_doc parent
             #floodfill_tree parent_data[:id], &blk
@@ -104,11 +105,13 @@ class TreeUtils
         info "To process #{_q.inspect}"
         _q.reject!{|e| node_visited?(e)}
         info "To process #{_q.length} node(s)"
+        index += 1
+        save if (index%10 == 0)
       end
     end
 
     def save
-      bn_file = data_file "tree-#{run_id}"
+      bn_file = data_file "bntree-amazon"
       info "Tree Length #{tree.length}"
       File.open(bn_file,'w'){|f|f.write(tree.to_yaml)}
     end

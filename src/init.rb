@@ -95,19 +95,19 @@ def parse_xml_without_namespace xml
 end
 
 def get_browse_nodes_from_xml_file file
-  AmazonBrowsNode.get_browse_nodes_from_xml File.read(file)
+  AmazonBrowseNode.get_browse_nodes_from_xml File.read(file)
 end
 
 def get_node_data_from_xml_doc xml_doc
-  AmazonBrowsNode.get_node_data_from_xml_doc xml_doc
+  AmazonBrowseNode.get_node_data_from_xml_doc xml_doc
 end
 
 def get_children_from_xml_doc xml_doc
-  AmazonBrowsNode.get_children_from_xml_doc xml_doc
+  AmazonBrowseNode.get_children_from_xml_doc xml_doc
 end
 
 def get_ancestors_from_xml_doc xml_doc
-  AmazonBrowsNode.get_ancestors_from_xml_doc xml_doc
+  AmazonBrowseNode.get_ancestors_from_xml_doc xml_doc
 end
 
 def compact_str str
