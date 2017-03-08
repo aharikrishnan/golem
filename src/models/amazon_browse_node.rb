@@ -112,4 +112,28 @@ class AmazonBrowseNode < ActiveRecord::Base
     bn
   end
 
+  def self.populate_dag
+    t = YAML.load_file(abs_path('data/bntree-amazon'))
+    forest = t.select{|k, v|v[:ancestors].nil?}
+    @s_path = {}
+    forest.each do |k, r|
+      TreeUtils.dfs(r, [], :node_picker => Proc.new{|node| t[node]}) do |node, path|
+        @s_path[node[:id]] ||= {}
+        spath = @s_path[node[:id]] || {}
+        ids = spath[:ids] || []
+        names = spath[:names] || []
+
+        ans = path
+        ids << ans.map{|a|a[:id]}.join("|")
+        names << ans.map{|a|a[:name]}.join("|")
+
+        ids.uniq!
+        names.uniq!
+
+        @s_path[node[:id]] = {:ids => ids, :names => names}
+      end
+    end
+    @s_path
+  end
+
 end

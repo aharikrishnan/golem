@@ -121,13 +121,20 @@ class TreeUtils
     def dfs(*args, &blk)
       tree = args[0]
       path = args[1] || []
+      options = args.last
+      options = options.is_a?(Hash)? options: {}
+      node_picker = options[:node_picker]
+
       return if tree.blank?
       blk.call(tree, path)
 
       if tree[:children].present?
         new_path = path + [{:name => tree[:name], :id => tree[:id]}]
         tree[:children].each do |node|
-          dfs(node,new_path,&blk)
+          if !node_picker.nil?
+            node = node_picker.call(node)
+          end
+          dfs(*[node,new_path, {:node_picker => node_picker}], &blk)
         end
       end
     end
