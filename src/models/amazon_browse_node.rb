@@ -84,7 +84,7 @@ class AmazonBrowseNode < ActiveRecord::Base
     xml_doc.xpath('BrowseNode/Ancestors/BrowseNode')
   end
 
-  def create_from_crawl crawl
+  def self.create_from_crawl crawl
     a_len, c_len = crawl.ancestors.length, crawl.childrens.length
     type = if a_len == 0 && c_len == 0
              'bud'
