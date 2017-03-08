@@ -315,9 +315,9 @@ c=a&b;
 
 
 aids = AmazonBrowseNode.all(:select => "id").map(&:id); nil
-cids = Crawl.all(:select => "id", :conditions => "type ='amazon browse node tree'").map(&:id); nil
+cids = Crawl.all(:select => "uid", :conditions => "type ='amazon browse node tree'").map(&:uid); nil
 ids = cids - aids; nil
-Crawl.scoped(:conditions => ["id in (?)", ids]).find_in_batches(:batch_size => 10){|cs|
+Crawl.find_in_batches(:conditions => ["id in (?)", ids], :batch_size => 10){|cs|
   Crawl.transaction{
     cs.map(&:populate);nil
   }
