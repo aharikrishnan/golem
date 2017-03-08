@@ -312,3 +312,11 @@ s = SearsProduct.all(:select => "upc").map(&:upc).uniq;
 a.compact!;
 s.compact!;
 c=a&b;
+
+
+ids = AmazonBrowseNode.all(:select => "id").map(&:id); nil
+Crawl.scoped(:conditions => ["type ='amazon browse node tree' and id not in (?)", ids], :select => "count(*)").find_in_batches(:batch_size => 1000){|cs|
+  Crawl.transaction{
+    cs.map(&:populate);nil
+  }
+}

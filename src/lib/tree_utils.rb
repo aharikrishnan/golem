@@ -104,8 +104,9 @@ class TreeUtils
         _q.reject!{|e| node_visited?(e)}
         info "To process #{_q.length} node(s)"
         index += 1
-        save if (index%10 == 0)
+        save if (index%100 == 0)
       end
+      save
     end
 
     def save
