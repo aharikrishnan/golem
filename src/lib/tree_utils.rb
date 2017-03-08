@@ -28,7 +28,6 @@ class TreeUtils
     end
 
     def add_ancestor bn_id, parent_bn_id
-      tree||={}
       tree[bn_id] ||={}
       tree[bn_id][:ancestors] ||= []
       if !tree[bn_id][:ancestors].include? parent_bn_id
@@ -40,7 +39,6 @@ class TreeUtils
     end
 
     def add_child bn_id, child_bn_id
-      tree||={}
       tree[bn_id] ||={}
       tree[bn_id][:children] ||= []
       if !tree[bn_id][:children].include? child_bn_id
@@ -112,7 +110,7 @@ class TreeUtils
 
     def save
       bn_file = data_file "bntree-amazon"
-      info "Tree Length #{tree.length}"
+      debug "writing tree to file '#{bn_file}'. Tree Length #{tree.length}"
       File.open(bn_file,'w'){|f|f.write(tree.to_yaml)}
     end
 
