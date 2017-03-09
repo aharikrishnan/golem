@@ -136,6 +136,11 @@ rescue Encoding::CompatibilityError => e
   puts "Error'ception: #{e.message}"
 end
 
+def error_log msg
+  error msg, :silent => true
+  File.open(abs_path("error.log"), 'a'){|f|f.write(msg); f.write("\n");}
+end
+
 def facepalm msg
   puts "(>ლ) \t#{msg}\n"
 end

@@ -19,15 +19,14 @@ class AmazonProduct < ActiveRecord::Base
         upc = item.css("> ItemAttributes UPC").text.strip rescue ""
         ean = item.css("> ItemAttributes EAN").text.strip rescue ""
         bn_ids = item.css('BrowseNodes > BrowseNode').map{|bn| bn.css(">BrowseNodeId").text.to_s.strip}
-        first_leaf_bn_id = item.css('BrowseNodes > BrowseNode').select{|bn| bn.css(">Children").length == 0}.first.css("> BrowseNodeId").text
+        first_leaf_bn_id = item.css('BrowseNodes > BrowseNode').select{|bn| bn.css(">Children").length == 0}
+        first_leaf_bn_id = (first_leaf_bn_id.length > 0)?  first_leaf_bn_id.first.css("> BrowseNodeId").text : bn_ids.first
         info "Leaf bn => #{first_leaf_bn_id}"
         attrs = {:title => title, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
 
         add_product asin, attrs
-
       rescue Exception => e
-        File.open(abs_path("error.log"), 'a'){|f|f.write("#{crawl.id} -- #{asin} -> #{e.message}\n")}
-        error e.message, :silent => true
+        error_log "#{crawl.id} -- #{asin} -> #{e.message}\n"
       end
     end
   end
