@@ -48,11 +48,9 @@ module Product
     end
 
     def add_browse_node browse_node_id
-      if self[:bn_id] != browse_node_id
-        existing_bn_ids = (self.browse_node_mapping.present?)? self.browse_node_mapping.map(&:bn_id) : []
-        if !existing_bn_ids.include?(browse_node_id)
-          self.browse_node_mapping.create :p_id => self.id, :bn_id => browse_node_id
-        end
+      existing_bn_ids = (self.browse_node_mapping.present?)? self.browse_node_mapping.map(&:bn_id) : []
+      if !existing_bn_ids.include?(browse_node_id)
+        self.browse_node_mapping.create :p_id => self.id, :bn_id => browse_node_id
       end
     end
   end
