@@ -17,7 +17,7 @@ root_bns_to_products_count = load_sql("""
   from crawls.amazon_browse_nodes as T1
   inner join crawls.amazon_browse_nodes as T2
   on T2.path_ids like CONCAT('%', T1.id, '|%') 
-  inner join crawls.amazon_products as T3
+  inner join crawls.products_browse_nodes_mapping as T3
   on T3.bn_id = T2.id
   where T1.type = 'root' and T2.type = 'leaf'
   group by T1.id
@@ -25,15 +25,16 @@ root_bns_to_products_count = load_sql("""
 """)
 
 bns_to_product_count = load_sql("""
-  select T2.id, T2.name, count(T2.name)
+  SELECT T2.id, T2.name, count(T2.name)
   from crawls.amazon_browse_nodes as T1
   inner join crawls.amazon_browse_nodes as T2
   on T2.path_ids like CONCAT('%', T1.id, '|%') 
-  inner join crawls.amazon_products as T3
+  inner join crawls.products_browse_nodes_mapping as T3
   on T3.bn_id = T2.id
-  where T1.id= 'INSERT_ID_HERE' and T2.type = 'leaf'
+  where T1.id= '2619525011' and T2.type = 'leaf'
   group by T2.id
-  order by count(T1.name) desc;
+  order by count(T1.name);
+
 """)
 # appliances = 2619525011
 # +---------------------------+----------------+

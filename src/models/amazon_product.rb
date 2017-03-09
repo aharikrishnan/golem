@@ -26,7 +26,7 @@ class AmazonProduct < ActiveRecord::Base
         add_product asin, attrs
 
       rescue Exception => e
-        File.open(abs_path("error.log"), 'a'){|f|f.write("#{crawl.id} -> #{e.message}")}
+        File.open(abs_path("error.log"), 'a'){|f|f.write("#{crawl.id} -- #{asin} -> #{e.message}\n")}
         error e.message, :silent => true
       end
     end
