@@ -1,11 +1,19 @@
 # encoding: utf-8
 class SearsBrowseNode < ActiveRecord::Base
-  def self.roots
-    self.scoped(:conditions => "type = 'root'")
-  end
+  acts_as_browse_node
 
-  self.inheritance_column = :_type_disabled
-  self.primary_key = :id
+  # :page
+  # :path
+  # :categories
+  # :category
+  def search opts={}
+    crawl_options = opts.merge(:bn => self[:id])
+
+    cj = CrawlJob.new(:input => crawl_options)
+    cj.type = 'sears search'
+    cj.save
+    puts cj.inspect
+  end
 
   def self.create_from_crawl node, path
     a_len, c_len = path.length, (node[:children] || []).length

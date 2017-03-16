@@ -2,10 +2,10 @@ class ActiveRecord::Base
   def self.acts_as_product
     klass = self
     klass.belongs_to :source, :class_name => 'Crawl', :foreign_key => :source_id
-    klass.belongs_to :browse_node, :class_name => 'AmazonBrowseNode', :foreign_key => :bn_id
+    klass.belongs_to :browse_node, :class_name => klass.name, :foreign_key => :bn_id
 
     klass.has_many :browse_node_mapping, :class_name => 'ProductBrowseNodeMapping', :primary_key => 'id', :foreign_key => 'p_id'
-    klass.has_many :browse_nodes, :through => :browse_node_mapping, :class_name => 'AmazonBrowseNode', :source => :a_browse_node
+    klass.has_many :browse_nodes, :through => :browse_node_mapping, :class_name => klass.name, :source => :a_browse_node
 
     klass.extend Product::ClassMethods
     klass.send :include, Product::InstanceMethods

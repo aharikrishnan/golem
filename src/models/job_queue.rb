@@ -3,6 +3,36 @@ class CrawlJob < ActiveRecord::Base
   serialize :input
   self.inheritance_column = :_type_disabled
 
+  def pagination?
+    opts[:pagination] == true
+  end
+
+  def get_next_page
+    url = case type
+    when 'amazon search' then
+      nil
+    when 'sears search' then
+      crawl = Crawl.find_by_uid(self.get_uid)
+      current_page = c.dump["data"]["pagination"][0]["id"].to_i
+      max_page = c.dump["data"]["pagination"][-1]["id"].to_i
+      if current_page < max_page
+        next_page = self.clone
+        next_page.input.merge!(:page => current_page+1)
+        if !next_page.already_crawled?
+          next_page.status = nil
+          next_page.save
+          next_page
+        else
+          c = Crawl.find_by_uid(next_page.get_uid)
+          c
+        end
+      end
+    else
+      facepalm "[#{self.tag}]: No entiendo! '#{type}'"
+      nil
+    end
+  end
+
   def create_crawl resp
     begin
       uid =  self.get_uid
@@ -25,7 +55,11 @@ class CrawlJob < ActiveRecord::Base
     bn= self.input[:bn] || self.input[:ids]
     page = self.input[:page]||1
     p = self.input[:type] || 's'
-    uid =  "a-#{p}-#{search_index}-#{bn}-#{page}"
+    keys = ['a', p]
+    keys << search_index if self.input[:search_index].present?
+    keys << bn
+    keys << page
+    uid =  keys.join("-")
   end
 
   def already_crawled?
@@ -105,6 +139,26 @@ class Worker
     CrawlJob.find_by_status(nil).present?
   end
 
+  def to_param h={}
+    h.map{|k,v| [k, CGI::escape(v)].join("=")}.join("&")
+  end
+
+  def sears_search opts
+    url = 'http://www.sears.com/service/search/v2/productSearch'
+    page = opts[:page]||1
+    path = opts[:path]||1
+    category = opts[:category]||1
+    categories = opts[:categories]||1
+    params = {
+      'pageNum' => page,
+      'catgroupId' => category,
+      'catgroupIdPath' => categories,
+      'levels' => path,
+      'primaryPath' => path
+    }
+    "#{url}?#{to_param(params)}"
+  end
+
   def amazon_search opts
     search_index = opts[:search_index] || "Electronics"
     bn= opts[:bn]
@@ -119,6 +173,9 @@ class Worker
       "ItemPage" => page,
       "ResponseGroup" => "BrowseNodes,ItemAttributes,Images,Similarities"
     }
+    if opts.has_key? :keywords
+      params.merge!({"Keywords" => opts[:keywords]})
+    end
     # Set current timestamp if not set
     params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
     # Generate the canonical query
@@ -172,6 +229,8 @@ class Worker
       self.amazon_search(crawl_job.input)
     when 'amazon upc lookup' then
       self.amazon_upc_lookup(crawl_job.input)
+    when 'sears search' then
+      self.sears_search(crawl_job.input)
     else
       facepalm "[#{self.tag}]: No entiendo! '#{type}'"
       nil
@@ -213,6 +272,9 @@ class Worker
           self.eta = Time.now
           crawl_job.status = 'complete'
           crawl_job.save
+          if crawl_job.pagination?
+            get_next_page
+          end
         rescue Exception => e
           error e.message, :silent => true
           crawl_job.status = 'error'

@@ -42,6 +42,18 @@ AmazonBrowseNode.roots.to_crawl.each do |root_bn|
   puts "Done #{root_bn.name}"
 end
 
+cnt_vec = File.read("/tmp/am_bn_count_vector.csv").split("\n").map{|r|r.split("\t")}
+cnt_vec.each do |bn, name, kws|
+CrawlJob.transaction do
+  kws.split("|")[0..10].each do |kw|
+    (10..8).each do |p|
+      bns.each do |bn|
+        bn.search(:page => p, :search_index => a.root.search_index, :keyword => kw, :type => "k-#{kw}"); nil
+      end
+    end
+  end
+end
+
 
 load '/home/hari/codebase/golem/src/init.rb'
 Dir.foreach("/home/hari/amazon/flash/tmp/.").each do |file|
@@ -325,3 +337,31 @@ end
 
 #Get all leaf nodes
 l = AmazonBrowseNode.all(:conditions => "path_ids like '%#{root.id}|%' and type='leaf'")
+
+
+Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-s-%-1"').find_in_batches(:batch_size => 100) do |cs|
+  cs.each do |c|
+    bn_id = c.fields[:bn]
+    info " #{c.uid} -- #{bn_id}"
+
+    bn = AmazonBrowseNode.find(bn_id)
+    bn.total_results ||= -1
+    if bn.total_results > 0
+      debug "already there!"
+      next
+    end
+
+
+    count = -1
+    begin
+      count = c.dump.css("ItemSearchResponse > Items > TotalResults").text
+    rescue Exception => e
+      error "I (#{c.id}) bombed"
+    end
+
+    bn.total_results = count
+    bn.save
+    info "#{bn.id} --> #{bn.total_results}"
+  end
+end
+

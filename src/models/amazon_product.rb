@@ -33,15 +33,3 @@ class AmazonProduct < ActiveRecord::Base
 
 end
 
-#
-# +-----------+--------------+------+-----+---------+-------+
-# | Field     | Type         | Null | Key | Default | Extra |
-# +-----------+--------------+------+-----+---------+-------+
-# | id        | varchar(255) | NO   | PRI | NULL    |       |
-# | title     | varchar(255) | YES  |     | NULL    |       |
-# | model     | varchar(255) | YES  |     | NULL    |       |
-# | brand     | varchar(255) | YES  |     | NULL    |       |
-# | source_id | int(11)      | YES  |     | NULL    |       |
-# | bn_id     | varchar(255) | YES  |     | NULL    |       |
-# +-----------+--------------+------+-----+---------+-------+
-#

@@ -42,3 +42,9 @@ def print_top_words(model, feature_names, n_top_words):
                         for i in topic.argsort()[:-n_top_words - 1:-1]]))
     print()
 
+query = """
+select me.*,count(*) from manual_evaluation me left join s_fb_map se on se.lca=me.lca left outer join crawls.sears_products sp on se.id=sp.bn_id where sp.id is not NULL and se.lca is not null group by sp.bn_id having count(*)<50;
+"""
+query = """
+select se.id, se.frontend, count(*) from manual_evaluation me left join s_fb_map se on se.lca=me.lca left outer join crawls.sears_products sp on se.id=sp.bn_id where se.lca is not null group by se.id having count(*)<50;
+"""

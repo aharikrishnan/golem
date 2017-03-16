@@ -1,23 +1,6 @@
 # encoding: utf-8
 class AmazonBrowseNode < ActiveRecord::Base
-  #serialize :path_ids, Array
-  #serialize :path_names, Array
-  belongs_to :source, :class_name => 'Crawl', :foreign_key => :source_id
-
-  def self.roots
-    self.scoped(:conditions => "type = 'root'")
-  end
-
-  def self.to_crawl
-    self.scoped(:conditions => "status  != 'nocrawl'")
-  end
-
-  self.inheritance_column = :_type_disabled
-  self.primary_key = :id
-
-  def leaf_nodes
-    AmazonBrowseNode.all(:conditions => ["type = ? AND path_ids LIKE ?",'leaf', "%#{self[:id]}%"]).select{|a|a.path_ids =~ /\b#{self[:id]}\b/}
-  end
+  acts_as_browse_node
 
   # :search_index
   # :bn
@@ -49,12 +32,8 @@ class AmazonBrowseNode < ActiveRecord::Base
     self[:path] = p.to_json
   end
 
-  def full_path
-    self.path_names.split("$$").map{|p| "#{p}|#{self.name}"}
-  end
-
-  def full_id
-    self.path_ids.split("$$").map{|p| "#{p}|#{self[:id]}"}
+  def root
+    AmazonBrowseNode.scoped(:conditions => {:id => self.full_id.first.split("|").first, :type =>'root'})
   end
 
   def self.get_node_data_from_xml_doc xml_doc

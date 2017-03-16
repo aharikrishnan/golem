@@ -20,7 +20,7 @@ class Crawl < ActiveRecord::Base
   end
 
   def self.crawled uid
-    Crawl.find_by_uid('x')
+    Crawl.find_by_uid(uid)
   end
 
   def populate
