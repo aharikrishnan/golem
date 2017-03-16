@@ -4,7 +4,7 @@ class CrawlJob < ActiveRecord::Base
   self.inheritance_column = :_type_disabled
 
   def pagination?
-    opts[:pagination] == true
+    self.input[:pagination] == true
   end
 
   def get_next_page

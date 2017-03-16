@@ -42,14 +42,13 @@ AmazonBrowseNode.roots.to_crawl.each do |root_bn|
   puts "Done #{root_bn.name}"
 end
 
-cnt_vec = File.read("/tmp/am_bn_count_vector.csv").split("\n").map{|r|r.split("\t")}
-cnt_vec.each do |bn, name, kws|
-CrawlJob.transaction do
+cnt_vec = File.read("/tmp/am_bn_count_vector.csv").split("\n").map{|r|r.split("\t")};nil
+cnt_vec[1..-1].each do |bn_id, name, kws|
+  bn = AmazonBrowseNode.find(bn_id)
   kws.split("|")[0..10].each do |kw|
-    (10..8).each do |p|
-      bns.each do |bn|
-        bn.search(:page => p, :search_index => a.root.search_index, :keyword => kw, :type => "k-#{kw}"); nil
-      end
+    puts kw
+    (8..10).each do |p|
+      bn.search(:page => p, :search_index => bn.root.first.search_index, :keyword => kw, :type => "k-#{kw}"); nil
     end
   end
 end
