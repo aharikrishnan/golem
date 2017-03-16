@@ -48,7 +48,7 @@ cnt_vec[1..-1].each do |bn_id, name, kws|
   kws.split("|")[0..10].each do |kw|
     puts kw
     (8..10).each do |p|
-      bn.search(:page => p, :search_index => bn.root.first.search_index, :keyword => kw, :type => "k-#{kw}"); nil
+      bn.search(:page => p, :search_index => bn.root.first.search_index, :keywords => kw, :type => "k-#{kw}"); nil
     end
   end
 end
