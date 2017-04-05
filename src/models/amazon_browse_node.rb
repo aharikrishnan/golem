@@ -2,6 +2,24 @@
 class AmazonBrowseNode < ActiveRecord::Base
   acts_as_browse_node
 
+
+  # crawl upto a minimum of 'n' for bns
+  def normalized_crawl bn_ids, n=300
+    cnt_vec = File.read("/tmp/am_bn_count_vector.csv").split("\n").map{|r|x=r.split("\t"); [x.first, x.last.split("|")]};nil
+    cnt_vec = Hash[cnt_vec[1..-1]]
+
+    cnt_vec.each do |bn_id, kws|
+      bn = AmazonBrowseNode.find(bn_id)
+      #kws.split("|")[0..10].each do |kw|
+      kws[11..15].each do |kw|
+        puts kw
+        (8..10).each do |p|
+          bn.search(:page => p, :search_index => bn.root.first.search_index, :keywords => kw, :type => "k-#{kw}"); nil
+        end
+      end
+    end
+  end
+
   # :search_index
   # :bn
   # :page

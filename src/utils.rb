@@ -42,10 +42,13 @@ AmazonBrowseNode.roots.to_crawl.each do |root_bn|
   puts "Done #{root_bn.name}"
 end
 
-cnt_vec = File.read("/tmp/am_bn_count_vector.csv").split("\n").map{|r|r.split("\t")};nil
-cnt_vec[1..-1].each do |bn_id, name, kws|
+cnt_vec = File.read("/tmp/am_bn_count_vector.1.csv").split("\n").map{|r|x=r.split("\t"); [x.first, x.last.split("|")]};nil
+cnt_vec = Hash[cnt_vec[1..-1]]
+
+cnt_vec.each do |bn_id, kws|
   bn = AmazonBrowseNode.find(bn_id)
-  kws.split("|")[0..10].each do |kw|
+  #kws.split("|")[0..10].each do |kw|
+  kws[0..15].each do |kw|
     puts kw
     (8..10).each do |p|
       bn.search(:page => p, :search_index => bn.root.first.search_index, :keywords => kw, :type => "k-#{kw}"); nil
@@ -53,6 +56,20 @@ cnt_vec[1..-1].each do |bn_id, name, kws|
   end
 end
 
+#bns = File.read("/tmp/pass_lt_200.csv").split.compact
+bns = File.read("/tmp/pass_lt_300.csv").split.compact
+bns.each do |bn_id|
+  bn = AmazonBrowseNode.find(bn_id)
+  #kws.split("|")[0..10].each do |kw|
+  kws = (cnt_vec[bn_id] || [])[0..20]
+  next if kws.blank?
+  kws.each do |kw|
+    puts kw
+    (8..10).each do |p|
+      bn.search(:page => p, :search_index => bn.root.first.search_index, :keywords => kw, :type => "k-#{kw}"); nil
+    end
+  end
+end
 
 load '/home/hari/codebase/golem/src/init.rb'
 Dir.foreach("/home/hari/amazon/flash/tmp/.").each do |file|
@@ -312,12 +329,43 @@ end
 
 AmazonBrowseNode.roots.scoped(:conditions => {:id => %w(133140011 13727921011 16310101 163856011 229534 2334129011 2334150011 2350149011 2625373011  283155 3561432011 468642 5174  599858 9013971011).to_a}).update_all :status => 'nocrawl'
 
-Crawl.scoped(:conditions => {:type => "amazon upc lookup"}).find_in_batches(:batch_size => 1000){|cs|
-  Crawl.transaction{
-    cs.map(&:populate);nil
-  }
-}
 
+def update_amazon_product crawl, inplace=false
+  begin
+  dps = crawl.dump.css("Items > Item").map do |i| 
+    asin = i.css(">ASIN").text
+    seo_url = i.css(">DetailPageURL").text
+    if inplace
+      begin
+        ap = AmazonProduct.find(asin)
+        ap.seo_url = seo_url
+        ap.save
+      rescue Exception => e
+        print "Asin not found #{asin}"
+      end
+    end
+    [asin, seo_url]
+  end
+  return dps
+  rescue Exception => e
+    return []
+  end
+end
+
+File.open("/tmp/ap.csv", "a") do |fo|
+  Crawl.scoped(:conditions => {:type => "amazon search"}).find_in_batches(:batch_size => 10000){|cs|
+    #Crawl.transaction{
+      #cs.map(&:populate);nil
+      cs.map{|c|
+        dps = update_amazon_product(c)
+        dps.each do |dp|
+          fo.write(dp.join("\t"))
+          fo.write("\n")
+        end
+      }
+    #}
+  }
+end
 a = AmazonProduct.all(:select => "upc").map(&:upc).uniq;
 s = SearsProduct.all(:select => "upc").map(&:upc).uniq;
 a.compact!;
@@ -337,23 +385,30 @@ end
 #Get all leaf nodes
 l = AmazonBrowseNode.all(:conditions => "path_ids like '%#{root.id}|%' and type='leaf'")
 
+Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-k-%"').find_in_batches(:batch_size => 100) do |cs|
+    cs.map(&:populate)
+end
 
-Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-s-%-1"').find_in_batches(:batch_size => 100) do |cs|
-  cs.each do |c|
+cids = Crawl.all(:select => "id", :conditions => "type='amazon search' and uid like 'a-k-%'").map(&:id)
+cids.each do |cid|
+  Crawl.find(cid).populate
+end
+
+cids = Crawl.all(:select => "id", :conditions => 'type="amazon search" and uid like "a-s-%-1"').map(&:id)
+cids.each do |cid|
+    c = Crawl.find(cid)
     bn_id = c.fields[:bn]
-    info " #{c.uid} -- #{bn_id}"
 
     bn = AmazonBrowseNode.find(bn_id)
-    bn.total_results ||= -1
-    if bn.total_results > 0
-      debug "already there!"
-      next
-    end
-
+    #bn.total_results ||= -1
+    #if bn.total_results > 0
+      #debug "already there!"
+      #next
+    #end
 
     count = -1
     begin
-      count = c.dump.css("ItemSearchResponse > Items > TotalResults").text
+      count = c.dump.css("ItemSearchResponse > Items > TotalResults").text.to_i
     rescue Exception => e
       error "I (#{c.id}) bombed"
     end
@@ -361,6 +416,10 @@ Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-s-%-1"').find
     bn.total_results = count
     bn.save
     info "#{bn.id} --> #{bn.total_results}"
-  end
+    bn.reload
+    raise "#{count} -- #{bn.total_results} #{bn.id}" unless bn.total_results == count
 end
+
+#Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-s-%-1"').find_in_batches(:batch_size => 100) do |cs|
+#end
 
