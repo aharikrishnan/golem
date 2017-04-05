@@ -194,7 +194,6 @@ class Worker
   end
 
   def amazon_upc_lookup opts
-    search_index = opts[:search_index] || "All"
     params = {
       "Service" => "AWSECommerceService",
       "Operation" => "ItemLookup",
@@ -202,9 +201,13 @@ class Worker
       "ItemId" => opts[:ids],
       "AWSAccessKeyId" => self.key,
       "AssociateTag" => self.tag,
-      "SearchIndex" => search_index,
       "ResponseGroup" => "BrowseNodes,ItemAttributes,Images,Similarities"
     }
+
+    if ['DPCI', 'SKU', 'UPC', 'EAN','ISBN'].include?(opts[:type])
+      search_index = opts[:search_index] || "All"
+      params["SearchIndex"] = search_index
+    end
     # Set current timestamp if not set
     params["Timestamp"] = Time.now.gmtime.iso8601 if !params.key?("Timestamp")
     # Generate the canonical query
