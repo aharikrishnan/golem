@@ -68,19 +68,24 @@ class CrawlJob < ActiveRecord::Base
     c.present?
   end
 
-  def self.assign_job!
-    CrawlJob.transaction do
-      j=CrawlJob.find_by_status(nil)
-      while j.already_crawled? do
-        facepalm "duplicado, ignorando #{j.id}"
-        j.status = 'duplicate'
-        j.save
-        j=CrawlJob.find_by_status(nil)
-      end
-      j.status = 'assigned'
+  def pre_assign_job! worker
+    status = "pre-assigned-to-#{worker.tag}"
+    j= CrawlJob.scoped(:conditions => {:status => nil}).update(:status => status)
+    j= CrawlJob.all(:conditions => {:status => status}, :limit => 1).first
+    j
+  end
+
+  def self.assign_job! worker
+    j = pre_assign_job! worker
+    while j.already_crawled? do
+      facepalm "duplicado, ignorando #{j.id}"
+      j.status = 'duplicate'
       j.save
-      j
+      j = pre_assign_job! worker
     end
+    j.status = 'assigned'
+    j.save
+    j
   end
 end
 
@@ -265,7 +270,7 @@ class Worker
   end
 
   def process
-    crawl_job = CrawlJob.assign_job!
+    crawl_job = CrawlJob.assign_job!(self)
     if crawl_job.present?
       request_url = self.get_url_from crawl_job
       if request_url.present?
