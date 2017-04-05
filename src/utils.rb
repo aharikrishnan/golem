@@ -253,6 +253,14 @@ Crawl.scoped(:conditions => "uid like 'a-s-%'").find_in_batches(:batch_size => 1
   end
 end
 
+Crawl.scoped(:conditions => "type='amazon upc lookup' and uid like 'a-ASIN-All-%'").find_in_batches(:batch_size => 10000) do |cs|
+  AmazonProduct.transaction do
+    cs.each do |c|
+      c.populate
+    end
+  end
+end
+
 ## stats collector
 a = Hash[File.read("/home/ubuntu/data/csvs/bn.csv.stat").split("\n").map{|r|r.to_s.strip.split("\t")}]; nil
 b = Hash[File.read("/home/ubuntu/data/csvs/bn.db.2.stat").split("\n").map{|r|r.to_s.strip.split("\t")}]; nil
