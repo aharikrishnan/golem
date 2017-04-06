@@ -1,23 +1,37 @@
 # encoding: utf-8
 class Crawl < ActiveRecord::Base
   serialize :fields
+  set_table_name 'crawls_mini'
+
+  has_one :crawl_dump, :class_name => 'CrawlDump', :primary_key => 'id', :foreign_key => 'id', :autosave => true
 
   self.inheritance_column = :_type_disabled
 
-  def dump
-    @dump ||= case self.dump_type
-    when 'xml' then
-      Nokogiri::XML(self[:dump])
-    when 'html' then
-      Nokogiri::HTML.fragment(self[:dump])
-    when 'yaml' then
-      YAML.parse(self[:dump]) rescue {}
-    when 'json' then
-      JSON.parse(self[:dump]) rescue {}
-    else
-      self[:dump]
-    end
+  delegate :dump, :dump=, :to => :crawl_dump
+
+  def dump_with_type
+    dump_str = dump_without_type
+    @dump ||= begin
+                if dump_str.present?
+                  case self.dump_type
+                  when 'xml' then
+                    Nokogiri::XML(dump_str)
+                  when 'html' then
+                    Nokogiri::HTML.fragment(dump_str)
+                  when 'yaml' then
+                    YAML.parse(dump_str) rescue {}
+                  when 'json' then
+                    JSON.parse(dump_str) rescue {}
+                  else
+                    dump_str
+                  end
+                else
+                  nil
+                end
+              end
   end
+  alias_method_chain :dump, :type
+
 
   def self.crawled uid
     Crawl.find_by_uid(uid)
