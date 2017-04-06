@@ -11,6 +11,12 @@ class Crawl < ActiveRecord::Base
 
   accepts_nested_attributes_for :crawl_dump
 
+  before_save :set_step
+
+  def set_step
+    self.step ||= 'crawled'
+  end
+
   def dump_with_type
     dump_str = dump_without_type
     @dump ||= begin
