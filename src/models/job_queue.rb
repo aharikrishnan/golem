@@ -145,7 +145,7 @@ class Worker
   end
 
   def job?
-    CrawlJob.find_by_status([nil, self.pre_assigned_status]).present?
+    CrawlJob.all(:conditions => ["status IS NULL or status = ?", self.pre_assigned_status], :limit => 1, :select => "count(*)").present?
   end
 
   def to_param h={}
