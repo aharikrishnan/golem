@@ -69,7 +69,7 @@ class CrawlJob < ActiveRecord::Base
   end
 
   def self.pre_assign_job! worker
-    status = "pre-assigned-to-#{worker.tag}"
+    status = worker.pre_assigned_status
     CrawlJob.scoped(:conditions => {:status => nil}, :limit => 1).update_all(:status => status)
     j= CrawlJob.all(:conditions => {:status => status}, :limit => 1).first
     j
@@ -140,8 +140,12 @@ class Worker
     self.status == 'free' && ((Time.now - self.eta) >= 1)
   end
 
+  def pre_assigned_status
+    "pre-assigned-to-#{self.tag}"
+  end
+
   def job?
-    CrawlJob.find_by_status(nil).present?
+    CrawlJob.find_by_status([nil, self.pre_assigned_status]).present?
   end
 
   def to_param h={}
