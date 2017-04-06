@@ -68,9 +68,9 @@ class CrawlJob < ActiveRecord::Base
     c.present?
   end
 
-  def pre_assign_job! worker
+  def self.pre_assign_job! worker
     status = "pre-assigned-to-#{worker.tag}"
-    j= CrawlJob.scoped(:conditions => {:status => nil}).update(:status => status)
+    CrawlJob.scoped(:conditions => {:status => nil}, :limit => 1).update_all(:status => status)
     j= CrawlJob.all(:conditions => {:status => status}, :limit => 1).first
     j
   end
