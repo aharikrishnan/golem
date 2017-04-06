@@ -7,7 +7,9 @@ class Crawl < ActiveRecord::Base
 
   self.inheritance_column = :_type_disabled
 
-  delegate :dump, :dump=, :to => :crawl_dump
+  delegate :dump, :to => :crawl_dump
+
+  accepts_nested_attributes_for :crawl_dump
 
   def dump_with_type
     dump_str = dump_without_type
@@ -31,6 +33,18 @@ class Crawl < ActiveRecord::Base
               end
   end
   alias_method_chain :dump, :type
+
+  def dump= dump_str
+    cd = self.crawl_dump
+    if cd.present?
+      cd.dump = dump_str
+    else
+      cd = self.build_crawl_dump
+      cd.id = self.id
+      cd.dump = dump_str
+    end
+  end
+
 
 
   def self.crawled uid
