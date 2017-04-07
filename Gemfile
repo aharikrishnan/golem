@@ -1,0 +1,31 @@
+source 'https://rubygems.org'
+
+
+gem 'activerecord', '2.3.8'
+gem 'activesupport', '2.3.8'
+gem 'concurrent-ruby', '1.0.2'
+gem 'domain_name', '0.5.20161129'
+gem 'htmlentities', '4.3.4'
+gem 'http-cookie', '1.0.3'
+gem 'i18n', '0.7.0'
+gem 'mechanize', '2.7.4'
+gem 'mime-types', '1.25.1'
+gem 'mini_portile2', '2.1.0'
+gem 'minitest', '5.9.1'
+gem 'mysql', '2.9.1'
+gem 'net-http-digest_auth', '1.4'
+gem 'net-http-persistent', '2.9.4'
+gem 'nokogiri', '1.6.8'
+gem 'ntlm-http', '0.1.1'
+gem 'parallel', '1.11.1'
+gem 'pkg-config', '1.1.7'
+gem 'ruby-progressbar', '1.8.1'
+gem 'thread_safe', '0.3.5'
+gem 'tzinfo', '1.2.2'
+gem 'unf', '0.1.4'
+gem 'unf_ext', '0.0.7.2'
+gem 'webrobots', '0.1.2'
+
+
+
+gem 'hirb', '0.7.3'
