@@ -253,11 +253,11 @@ Crawl.scoped(:conditions => "uid like 'a-s-%'").find_in_batches(:batch_size => 1
   end
 end
 
-Crawl.scoped(:conditions => "type='amazon upc lookup' and uid like 'a-ASIN-All-%'").find_in_batches(:batch_size => 10000) do |cs|
-  AmazonProduct.transaction do
-    cs.each do |c|
-      c.populate
-    end
+#Crawl.scoped(:conditions => "type='amazon upc lookup' and step='crawled' and uid like 'a-ASIN-All-%'").find_in_batches(:batch_size => 10000) do |cs|
+Crawl.scoped(:conditions => "step='crawled'").find_in_batches(:batch_size => 100) do |cs|
+  cs.each do |c|
+    c.populate
+    c.update_attribute 'step', 'parsed'
   end
 end
 
@@ -431,3 +431,6 @@ end
 #Crawl.scoped(:conditions  => 'type="amazon search" and uid like "a-s-%-1"').find_in_batches(:batch_size => 100) do |cs|
 #end
 
+
+asins = File.read("/tmp/asin-to-enrich.csv").split
+AmazonBrowseNode.item_lookup_by_asin(asins)

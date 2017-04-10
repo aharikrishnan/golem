@@ -57,12 +57,14 @@ class Crawl < ActiveRecord::Base
     Crawl.find_by_uid(uid)
   end
 
-  def populate
+  def populate options={}
     case self[:type]
     when 'amazon browse node tree' then
       AmazonBrowseNode.create_from_crawl(self)
     when 'amazon search' then
       AmazonProduct.create_from_crawl(self)
+    when 'amazon keyword search' then
+      AmazonProduct.parse_from_crawl(self, options)
     when 'amazon upc lookup' then
       AmazonProduct.create_from_upc_crawl(self)
     when 'sears search' then

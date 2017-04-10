@@ -239,6 +239,8 @@ class Worker
     url = case type
     when 'amazon search' then
       self.amazon_search(crawl_job.input)
+    when 'amazon keyword search' then
+      self.amazon_search(crawl_job.input)
     when 'amazon upc lookup' then
       self.amazon_upc_lookup(crawl_job.input)
     when 'sears search' then

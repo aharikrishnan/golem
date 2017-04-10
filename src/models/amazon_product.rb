@@ -6,7 +6,7 @@ class AmazonProduct < ActiveRecord::Base
     self.create_from_crawl crawl
   end
 
-  def self.create_from_crawl crawl
+  def self.parse_from_crawl crawl, options={}
     doc = crawl.dump
     items = doc.css('Items > Item')
     debug "To process #{items.length}"
@@ -24,12 +24,21 @@ class AmazonProduct < ActiveRecord::Base
         first_leaf_bn_id = (first_leaf_bn_id.length > 0)?  first_leaf_bn_id.first.css("> BrowseNodeId").text : bn_ids.first
         info "Leaf bn => #{first_leaf_bn_id}"
         attrs = {:title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
-
-        add_product asin, attrs
+        if ( file = options[:of] ).present?
+          File.open(file, 'a'){|fo| fo.write(attr.sort.values) }
+        end
+        if options[:view_only]
+          info attrs.inspect
+        else
+          add_product asin, attrs
+        end
       rescue Exception => e
         error_log "#{crawl.id} -- #{asin} -> #{e.message}\n"
       end
     end
+  end
+  def self.create_from_crawl crawl
+    self.parse_from_crawl crawl, :create => true
   end
 
 end
