@@ -14,6 +14,7 @@ class Worker
       info "Worker '#{self.tag}' registered."
       update_pid(self.eta)
       self.thread = Thread.new do
+        sleep 1 # prevent deadlock
         process_loop
       end
     else
@@ -273,6 +274,5 @@ def go_to_work!
   threads = []
   AWS_IDENTITIES.each do |identity|
     ApiWorker.new(identity)
-    sleep 1 # prevent deadlock
   end
 end
