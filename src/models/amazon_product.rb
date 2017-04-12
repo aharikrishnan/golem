@@ -25,7 +25,7 @@ class AmazonProduct < ActiveRecord::Base
         info "Leaf bn => #{first_leaf_bn_id}"
         attrs = {:title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
         if ( file = options[:of] ).present?
-          File.open(file, 'a'){|fo| fo.write(attrs.sort.map{|a|a[1]}.join("\t")); fo.write("\n") }
+          File.open(file, 'a'){|fo| fo.write(attrs.sort.map{|a|a[1].to_s}.join("\t")); fo.write("\n") }
         end
         if options[:view_only]
           info attrs.inspect
