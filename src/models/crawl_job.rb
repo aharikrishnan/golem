@@ -88,4 +88,3 @@ class CrawlJob < ActiveRecord::Base
   end
 end
 
-

@@ -434,3 +434,5 @@ end
 
 asins = File.read("/tmp/asin-to-enrich.csv").split
 AmazonBrowseNode.item_lookup_by_asin(asins)
+
+ParseWorker.new(:type => 'amazon search', :from => 'parsed.0', :to => 'parsed').start

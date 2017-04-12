@@ -119,14 +119,17 @@ def run_id; @run_id; end
 def run_id= id; @run_id = id; end
 
 def info msg
+  return if ActiveRecord::Base.logger.nil?
   puts "(っ◕‿◕)っ\t #{msg}\n"
 end
 
 def debug msg
+  return if ActiveRecord::Base.logger.nil?
   puts "(Ͼ˳Ͽ)..!!!\t#{msg}"
 end
 
 def error msg, opts={}
+  return if ActiveRecord::Base.logger.nil?
   m =  "ლ(ಠ益ಠ)ლ \t#{msg}"
   if opts[:silent]
     puts m
@@ -143,6 +146,7 @@ def error_log msg
 end
 
 def facepalm msg
+  return if ActiveRecord::Base.logger.nil?
   puts "(>ლ) \t#{msg}\n"
 end
 
