@@ -245,7 +245,8 @@ class ParseWorker
 
   def self.start crawl_type, from_step, to_step
     ActiveRecord::Base.logger = nil
-    crawl_ids_to_process = Crawl.scoped(:select => "id", :conditions => [ "type = ? and step is NULL or step in (?)", crawl_type, from_step ]).map(&:id)
+    type_query  = crawl_type.present? ?  "type in (#{crawl_type.join(",")}) and " : ''
+    crawl_ids_to_process = Crawl.scoped(:select => "id", :conditions => [ "#{type_query} step is NULL or step in (?)", from_step ]).map(&:id)
     grouped_crawl_ids = crawl_ids_to_process.each_slice(10)
 
     Parallel.each(grouped_crawl_ids, :in_processes =>  16, :progress => 'Parsing') do |grouped_crawl|
