@@ -16,6 +16,7 @@ require 'mysql'
 require 'time'
 require 'uri'
 require 'yaml'
+require 'hirb'
 
 PROJECT_ROOT = Pathname.new(File.expand_path(File.join(File.dirname(__FILE__), '..')))
 ENDPOINT = "webservices.amazon.com"
@@ -168,3 +169,4 @@ def reload
   require_file __FILE__
 end
 
+Hirb.enable
