@@ -19,6 +19,12 @@ module Product
       bn_ids = attrs.delete(:bn_ids) || []
 
       if p.present?
+        # always keep high priority, the lesser is higher
+        attrs[:priority] = attrs[:priority].present?? attrs[:priority].to_i : 999999999
+        if p.priority.present? && attrs[:priority] > p.priority
+          attrs[:priority] = p.priority
+        end
+
         new_attrs = Hash[attrs.select{|k, v|v.present?}]
         new_attrs = p.attributes.merge(new_attrs)
         p.attributes = new_attrs

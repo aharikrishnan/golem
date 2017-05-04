@@ -10,8 +10,16 @@ class AmazonProduct < ActiveRecord::Base
     doc = crawl.dump
     items = doc.css('Items > Item')
     debug "To process #{items.length}"
-    items.map do |item| 
+
+    page = doc.css('Argument[Name="ItemPage"]').attr('Value').text.to_s.to_i
+    has_keyword  = doc.css('Argument[Name="Keywords"]').present?
+    if has_keyword
+      page = 999000000 + ( page*1000 )
+    end
+
+    items.each_with_index do |item, index| 
       begin
+        priority = page+ index
         asin = item.css('> ASIN').text.strip
         seo_url = item.css('> DetailPageURL').text.strip
         title = item.css('> ItemAttributes Title').text.strip rescue ""
@@ -24,7 +32,7 @@ class AmazonProduct < ActiveRecord::Base
         first_leaf_bn_id = (first_leaf_bn_id.length > 0)?  first_leaf_bn_id.first.css("> BrowseNodeId").text : bn_ids.first
         info "Leaf bn => #{first_leaf_bn_id}"
 k = crawl.fields[:keywords]
-        attrs = {:k => k, :title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids}
+        attrs = {:k => k, :title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids, :priority => priority}
         if ( file = options[:of] ).present?
           File.open(file, 'a'){|fo| fo.write(attrs.sort.map{|a|a[1].to_s}.join("\t")); fo.write("\n") }
         end
@@ -34,7 +42,7 @@ k = crawl.fields[:keywords]
           add_product asin, attrs
         end
       rescue Exception => e
-        error_log "#{crawl.id} -- #{asin} -> #{e.message}\n"
+        error_log "#{crawl.id} -- #{asin} -> #{e.message}\n#{e.backtrace}"
       end
     end
   end
