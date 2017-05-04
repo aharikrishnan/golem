@@ -12,9 +12,10 @@ class AmazonProduct < ActiveRecord::Base
     debug "To process #{items.length}"
 
     page = doc.css('Argument[Name="ItemPage"]').attr('Value').text.to_s.to_i
+    page = page*1000
     has_keyword  = doc.css('Argument[Name="Keywords"]').present?
     if has_keyword
-      page = 999000000 + ( page*1000 )
+      page = 999000000 + page
     end
 
     items.each_with_index do |item, index| 

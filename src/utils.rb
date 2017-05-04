@@ -434,3 +434,21 @@ end
 
 asins = File.read("/tmp/asin-to-enrich.csv").split
 AmazonBrowseNode.item_lookup_by_asin(asins)
+
+
+
+## Script to add priority to amazon products
+#
+# Convention = 
+#   if Browse Node Crawl -> 1..10
+#   if Keyword Crawl -> 999 XXX YYY, where XXX is the page number and YYY (1..10) is the position (1..10)
+#   if Product/ UPC Crawl -> 888
+
+bn_ids = [ '1197396' ]
+valid_product_types = [ "amazon search", "amazon keyword search", "amazon upc lookup"]
+bn_ids.each do |bn_id|
+  Crawl.scoped(:conditions => [ "uid like ? and type in (?)", "%#{bn_id}%", valid_product_types]).find_in_batches(:batch_size => 100) do |cs|
+      cs.map(&:populate)
+  end
+end
+
