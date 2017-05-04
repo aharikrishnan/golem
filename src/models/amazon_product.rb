@@ -32,9 +32,10 @@ class AmazonProduct < ActiveRecord::Base
         first_leaf_bn_id = item.css('BrowseNodes > BrowseNode').select{|bn| bn.css(">Children").length == 0}
         first_leaf_bn_id = (first_leaf_bn_id.length > 0)?  first_leaf_bn_id.first.css("> BrowseNodeId").text : bn_ids.first
         info "Leaf bn => #{first_leaf_bn_id}"
-k = crawl.fields[:keywords]
-        attrs = {:k => k, :title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids, :priority => priority}
+        k = crawl.fields[:keywords]
+        attrs = {:title => title, :seo_url => seo_url, :model => model, :brand => brand, :upc => upc, :ean => ean, :source_id => crawl.id, :bn_id => bn_ids.first, :bn_ids => bn_ids, :priority => priority}
         if ( file = options[:of] ).present?
+          attrs[:k] = k
           File.open(file, 'a'){|fo| fo.write(attrs.sort.map{|a|a[1].to_s}.join("\t")); fo.write("\n") }
         end
         if options[:view_only]
